@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const { convert } = require('html-to-text');
 const psl = require('psl');
-import fetch from 'node-fetch';
+const { fetch } = require('node-fetch');
 
 app.get('/get-kws', async (req, res) => { 
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')

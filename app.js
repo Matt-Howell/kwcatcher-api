@@ -5,7 +5,7 @@ const psl = require('psl');
 const fetch = require('node-fetch');
 
 app.get('/get-kws', async (req, res) => { 
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    res.set('Access-Control-Allow-Origin', 'https://kw-catcher-b8bbx.ondigitalocean.app')
     async function postData(val) {
         const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
             method: 'POST',
@@ -63,7 +63,7 @@ app.get('/get-kws', async (req, res) => {
 })
 
 app.get('/analyse-kw', async (req, res) => { 
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    res.set('Access-Control-Allow-Origin', 'https://kw-catcher-b8bbx.ondigitalocean.app')
     async function postData(val) {
         const response = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/historical_search_volume/live', {
             method: 'POST',

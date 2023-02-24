@@ -23,16 +23,12 @@ app.get('/get-kws', async (req, res) => {
 
     let allVals = []
 
-    console.log(req.query.seed)
-
     const alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
     
     let allKeys = []
     for(i=0;i<alphabet.length;i++){
         allKeys.push(String(req.query.seed).concat(" "+alphabet[i]))
     }
-
-    console.log(allKeys)
 
     postData(allKeys).then((dataF) => {
         let newKeys = []
@@ -43,7 +39,6 @@ app.get('/get-kws', async (req, res) => {
                 newKeys.push(elme)
             })
         })
-        console.log(newKeys)
         if (newKeys.length < 50) {
             postData(newKeys).then((data) => {
                 data.data.forEach((elme2) => { 
@@ -108,7 +103,6 @@ app.get('/analyse-kw', async (req, res) => {
 
     postData().then((dataF) => {
         let data = dataF
-        console.log(data)
         let historical_volume = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.monthly_searches.slice(0, 12) || 0 : [{year:2022, month:12, search_volume:0}, {year:2022, month:11, search_volume:0}, {year:2022, month:10, search_volume:0}]
         let cpc = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.cpc || 0 : 0
         let search_volume = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.search_volume : 0
@@ -170,13 +164,11 @@ app.get('/analyse-kw', async (req, res) => {
                                         { selector: 'ul' }
                                     ]
                                 });
-                                console.log(text)
                                 let totalWordCount = text.split(" ").length
                                 return totalWordCount
-                            }).catch(error => console.log('error', error));
+                            })
                         }
                         catch(e) {
-                            console.log(e)
                             return 0
                         }
                     }
@@ -230,4 +222,4 @@ app.get('/analyse-kw', async (req, res) => {
     });
 })
 
-app.listen(4242, () => console.log('Running on port 4242'));
+app.listen(8080, () => console.log('Running on port 8080'));

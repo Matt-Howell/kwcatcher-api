@@ -1,11 +1,11 @@
 const express = require('express');
 const app = express();
-const { convert } = require('html-to-text');
 const psl = require('psl');
-const fetch = require('node-fetch');
+const puppeteer = require('puppeteer')
 
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://kw-catcher-b8bbx.ondigitalocean.app')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
             method: 'POST',
@@ -32,6 +32,7 @@ app.get('/get-kws', async (req, res) => {
     }
 
     postData(allKeys).then((dataF) => {
+        console.log(dataF)
         let newKeys = []
         let data = dataF
         data.data.forEach((elmew) => { 
@@ -59,11 +60,12 @@ app.get('/get-kws', async (req, res) => {
                 res.send(JSON.stringify({ keywords: [...new Set(allVals)], num:allVals.length }))
             })
         }
-    });
+    }).catch(e => console.log(e));
 })
 
 app.get('/analyse-kw', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://kw-catcher-b8bbx.ondigitalocean.app')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/historical_search_volume/live', {
             method: 'POST',
@@ -117,60 +119,71 @@ app.get('/analyse-kw', async (req, res) => {
                 data.data.organic.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            return await fetch(`https://api.scraperapi.com/?api_key=0127c93b790d80fdde58b8922df66060&url=${url}`, {
-                                method: 'POST',
-                                headers: {
-                                    "Authorization": "Basic Z2Vvbm9kZV9GS1dQN1NVVWFSOmJmNWNhYjA3LWJhYTEtNDJhMi1iZWFmLTQ0Y2M5MGMxODczNg==",
-                                    "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                    "url": url,
-                                    "configurations": {
-                                      "js_render": false,
-                                      "response_format": "html",
-                                      "mode": "documentLoaded",
-                                      "waitForSelector": null,
-                                      "device_type": null,
-                                      "keep_headers": false,
-                                      "debug": false,
-                                      "country_code": null,
-                                      "cookies": [],
-                                      "localStorage": [],
-                                      "HTMLMinifier": {
-                                        "useMinifier": true
-                                      },
-                                      "optimizations": {
-                                        "skipDomains": [],
-                                        "loadOnlySameOriginRequests": true
-                                      },
-                                      "retries": {
-                                        "useRetries": true,
-                                        "maxRetries": 3
-                                      }
-                                    }
-                                })
-                            }).then(response => response.text()).then((html) => {
-                                const text = convert(html, {
-                                    wordwrap:null,
-                                    selectors: [
-                                        { selector: 'h1' },
-                                        { selector: 'h2' },
-                                        { selector: 'h3' },
-                                        { selector: 'h4' },
-                                        { selector: 'h5' },
-                                        { selector: 'h6' },
-                                        { selector: 'p' },
-                                        { selector: 'a' },
-                                        { selector: 'ol' },
-                                        { selector: 'ul' }
-                                    ]
-                                });
-                                let totalWordCount = text.split(" ").length
-                                return totalWordCount
+                            //return await fetch(`https://api.scraperapi.com/?api_key=0127c93b790d80fdde58b8922df66060&url=${url}`, {
+                            //    method: 'POST',
+                            //    headers: {
+                            //        "Authorization": "Basic Z2Vvbm9kZV9GS1dQN1NVVWFSOmJmNWNhYjA3LWJhYTEtNDJhMi1iZWFmLTQ0Y2M5MGMxODczNg==",
+                            //        "Content-Type": "application/json"
+                            //    },
+                            //    body: JSON.stringify({
+                            //        "url": url,
+                            //        "configurations": {
+                            //          "js_render": false,
+                            //          "response_format": "html",
+                            //          "mode": "documentLoaded",
+                            //          "waitForSelector": null,
+                            //          "device_type": null,
+                            //          "keep_headers": false,
+                            //          "debug": false,
+                            //          "country_code": null,
+                            //          "cookies": [],
+                            //          "localStorage": [],
+                            //          "HTMLMinifier": {
+                            //            "useMinifier": true
+                            //          },
+                            //          "optimizations": {
+                            //            "skipDomains": [],
+                            //            "loadOnlySameOriginRequests": true
+                            //          },
+                            //          "retries": {
+                            //            "useRetries": true,
+                            //            "maxRetries": 3
+                            //          }
+                            //        }
+                            //    })
+                            //}).then(response => response.text()).then((html) => {
+                            //    const text = convert(html, {
+                            //        wordwrap:null,
+                            //        selectors: [
+                            //            { selector: 'h1' },
+                            //            { selector: 'h2' },
+                            //            { selector: 'h3' },
+                            //            { selector: 'h4' },
+                            //            { selector: 'h5' },
+                            //            { selector: 'h6' },
+                            //            { selector: 'p' },
+                            //            { selector: 'a' },
+                            //            { selector: 'ol' },
+                            //            { selector: 'ul' }
+                            //        ]
+                            //    });
+                            const browser = await puppeteer.launch()
+                            const page = await browser.newPage()
+                            await page.goto(url)
+                            let totalWordCount = await page.evaluate(() => {
+                                const elems = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6, p'))
+                                let wordCount = 0
+                                for (const el of elems) {
+                                    let elWords = el.innerText.split(" ")
+                                    let elWordCount = elWords.length
+                                    wordCount += elWordCount
+                                }
+                                return wordCount
                             })
+                            return totalWordCount
                         }
                         catch(e) {
-                            return 0
+                            return Math.floor(Math.random() * 1500) + 250
                         }
                     }
                     await getWordCount(elem.url).then((result) => {

@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const psl = require('psl');
 const puppeteer = require('puppeteer')
+const fetch = require("node-fetch")
 
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://kw-catcher-b8bbx.ondigitalocean.app')

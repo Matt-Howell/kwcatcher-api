@@ -1,7 +1,8 @@
 const express = require('express');
 const app = express();
 const psl = require('psl');
-const puppeteer = require('puppeteer')
+const puppeteer = require('puppeteer');
+const fetch = require("node-fetch")
 
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://oyster-app-3iwrj.ondigitalocean.app')
@@ -119,54 +120,6 @@ app.get('/analyse-kw', async (req, res) => {
                 data.data.organic.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            //return await fetch(`https://api.scraperapi.com/?api_key=0127c93b790d80fdde58b8922df66060&url=${url}`, {
-                            //    method: 'POST',
-                            //    headers: {
-                            //        "Authorization": "Basic Z2Vvbm9kZV9GS1dQN1NVVWFSOmJmNWNhYjA3LWJhYTEtNDJhMi1iZWFmLTQ0Y2M5MGMxODczNg==",
-                            //        "Content-Type": "application/json"
-                            //    },
-                            //    body: JSON.stringify({
-                            //        "url": url,
-                            //        "configurations": {
-                            //          "js_render": false,
-                            //          "response_format": "html",
-                            //          "mode": "documentLoaded",
-                            //          "waitForSelector": null,
-                            //          "device_type": null,
-                            //          "keep_headers": false,
-                            //          "debug": false,
-                            //          "country_code": null,
-                            //          "cookies": [],
-                            //          "localStorage": [],
-                            //          "HTMLMinifier": {
-                            //            "useMinifier": true
-                            //          },
-                            //          "optimizations": {
-                            //            "skipDomains": [],
-                            //            "loadOnlySameOriginRequests": true
-                            //          },
-                            //          "retries": {
-                            //            "useRetries": true,
-                            //            "maxRetries": 3
-                            //          }
-                            //        }
-                            //    })
-                            //}).then(response => response.text()).then((html) => {
-                            //    const text = convert(html, {
-                            //        wordwrap:null,
-                            //        selectors: [
-                            //            { selector: 'h1' },
-                            //            { selector: 'h2' },
-                            //            { selector: 'h3' },
-                            //            { selector: 'h4' },
-                            //            { selector: 'h5' },
-                            //            { selector: 'h6' },
-                            //            { selector: 'p' },
-                            //            { selector: 'a' },
-                            //            { selector: 'ol' },
-                            //            { selector: 'ul' }
-                            //        ]
-                            //    });
                             const browser = await puppeteer.launch()
                             const page = await browser.newPage()
                             await page.goto(url)

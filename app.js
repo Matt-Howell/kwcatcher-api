@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer')
 const fetch = require("node-fetch")
 
 app.get('/get-kws', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://oyster-app-3iwrj.ondigitalocean.app')
+    res.set('Access-Control-Allow-Origin', 'https://fetch.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
@@ -15,7 +15,7 @@ app.get('/get-kws', async (req, res) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                "gl": "US",
+                "gl": req.query.cc,
                 "hl": "en_US",
                 "keywords": val   
             })
@@ -65,7 +65,7 @@ app.get('/get-kws', async (req, res) => {
 })
 
 app.get('/analyse-kw', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://oyster-app-3iwrj.ondigitalocean.app')
+    res.set('Access-Control-Allow-Origin', 'https://fetch.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/historical_search_volume/live', {
@@ -90,7 +90,7 @@ app.get('/analyse-kw', async (req, res) => {
             },
             body: JSON.stringify({
                 "query": req.query.seed,
-                "gl": "US",
+                "gl": req.query.cc,
                 "hl": "en_US",
                 "safe": false,
                 "filter": 0,
@@ -111,6 +111,7 @@ app.get('/analyse-kw', async (req, res) => {
         let cpc = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.cpc || 0 : 0
         let search_volume = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.search_volume : 0
         getSERP().then(async (dataB) => {
+            console.log(dataB)
             let data = dataB
             let pplAlsoAsk = []  
             let serpResults = []
@@ -171,16 +172,8 @@ app.get('/analyse-kw', async (req, res) => {
                             const browser = await puppeteer.launch()
                             const page = await browser.newPage()
                             await page.goto(url)
-                            let totalWordCount = await page.evaluate(() => {
-                                const elems = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, a, li, td, table, body, div'))
-                                let wordCount = 0
-                                for (const el of elems) {
-                                    let elWords = el.innerText.split(" ")
-                                    let elWordCount = elWords.length
-                                    wordCount += elWordCount
-                                }
-                                return wordCount
-                            })
+                            let bodyHandle = await page.$('body');
+                            let totalWordCount = (await page.evaluate(body => body.innerText, bodyHandle)).split(" ").length;
                             return totalWordCount
                         }
                         catch(e) {

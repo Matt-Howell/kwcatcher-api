@@ -3,10 +3,12 @@ const app = express();
 const psl = require('psl');
 const puppeteer = require('puppeteer')
 const fetch = require("node-fetch")
+const { Configuration, OpenAIApi } = require("openai");
+require('dotenv').config()
 
 app.get('/get-kws', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
             method: 'POST',
@@ -65,8 +67,8 @@ app.get('/get-kws', async (req, res) => {
 })
 
 app.get('/analyse-kw', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/historical_search_volume/live', {
             method: 'POST',
@@ -177,7 +179,7 @@ app.get('/analyse-kw', async (req, res) => {
                             return totalWordCount
                         }
                         catch(e) {
-                            return Math.floor(Math.random() * 1500) + 250
+                            return 1245
                         }
                     }
                     await getWordCount(elem.url).then((result) => {
@@ -195,7 +197,52 @@ app.get('/analyse-kw', async (req, res) => {
                 let avgW = Math.floor(totalWords/serpResults.length)
                 async function getserpscore() {
                     let serpScore = 1
-                    let lowForum = ["reddit.com","quora.com","stackexchange.com","stackoverflow.com","tomshardware.com","askinglot.com","wix.com","blogspot.com","wordpress.com","pinterest.com","facebook.com","twitter.com","linkedin.com"]
+                    let lowForum = ["reddit.com","quora.com","stackexchange.com","stackoverflow.com","tomshardware.com","askinglot.com","wix.com","blogspot.com","wordpress.com","pinterest.com","facebook.com","twitter.com","linkedin.com","yahoo.com",
+                    "wordpress.org",
+                    "github.com",
+                    "tripadvisor.com",
+                    "goodreads.com",
+                    "steamcommunity.com",
+                    "gamefaqs.com",
+                    "xda-developers.com",
+                    "myfitnesspal.com",
+                    "webmd.com",
+                    "babycenter.com",
+                    "city-data.com",
+                    "cruisecritic.com",
+                    "houzz.com",
+                    "theknot.com",
+                    "weddingwire.com",
+                    "ehealthforum.com",
+                    "bodybuilding.com",
+                    "tomshardware.com",
+                    "avsforum.com",
+                    "dslreports.com",
+                    "fodors.com",
+                    "bogleheads.org",
+                    "chowhound.com",
+                    "whirlpool.net.au",
+                    "beeradvocate.com",
+                    "winespectator.com",
+                    "dpreview.com",
+                    "dpreview.com",
+                    "community.adobe.com",
+                    "sketchup.com",
+                    "unrealengine.com",
+                    "blenderartists.org",
+                    "autodesk.com",
+                    "probrewer.com",
+                    "homebrewtalk.com",
+                    "androidcentral.com",
+                    "crackberry.com",
+                    "macrumors.com",
+                    "imore.com",
+                    "windowscentral.com",
+                    "windowsforum.com",
+                    "linuxquestions.org",
+                    "raspberrypi.org",
+                    "arduino.cc",
+                    "avforums.com"]
                     let avgDays = 0
                     for (let i = 0; i < serpResults.length; i++) {
                         if(lowForum.includes(psl.parse(serpResults[i].url).domain)){
@@ -212,9 +259,9 @@ app.get('/analyse-kw', async (req, res) => {
                     if (snippet != null) {
                         serpScore += 1
                     }
-                    if (avgW < 500){
+                    if (avgW < 750){
                         serpScore += 2
-                    } else if (avgW < 1000) {
+                    } else if (avgW < 1250) {
                         serpScore += 1
                     }
                     if (serpScore > 5) {
@@ -223,7 +270,22 @@ app.get('/analyse-kw', async (req, res) => {
                     return serpScore
                 }
                 await getserpscore().then( async (serpScore) => {
-                    res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore } }))
+                      const configuration = new Configuration({
+                        apiKey: process.env.OPENAI_API_KEY,
+                      });
+
+                      const openai = new OpenAIApi(configuration);
+                      
+                      await openai.createCompletion({
+                        model: "text-davinci-003",
+                        prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,
+                        temperature: 0.01,
+                        max_tokens: 412,
+                        top_p: 1,
+                        frequency_penalty: 0,
+                        presence_penalty: 0,
+                        stop: ["---"],
+                      }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,post:aiserp.data.choices[0].text } })));       
                 })
             }))
         })

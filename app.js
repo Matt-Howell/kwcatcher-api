@@ -223,8 +223,12 @@ app.get('/analyse-kw', async (req, res) => {
                     return serpScore
                 }
                 await getserpscore().then( async (serpScore) => {
-                      const configuration = new Configuration({apiKey: "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",});
+                      const configuration = new Configuration({
+                        apiKey: process.env.OPENAI_API_KEY,
+                      });
+
                       const openai = new OpenAIApi(configuration);
+                      
                       await openai.createCompletion({
                         model: "text-davinci-003",
                         prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,

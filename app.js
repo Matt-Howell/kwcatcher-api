@@ -7,8 +7,8 @@ const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config()
 
 app.get('/get-kws', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
             method: 'POST',
@@ -67,8 +67,8 @@ app.get('/get-kws', async (req, res) => {
 })
 
 app.get('/analyse-kw', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/historical_search_volume/live', {
             method: 'POST',
@@ -84,25 +84,8 @@ app.get('/analyse-kw', async (req, res) => {
     }
 
     async function getSERP(val) {
-        const response = await fetch('https://api.serpsbot.com/v2/google/organic-search', {
-            method: 'POST',
-            headers: {
-                'X-API-KEY': 'C7RmWpEFYbzsLrpdxfedWo2Jt5fbe3LE',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                "query": req.query.seed,
-                "gl": req.query.cc,
-                "hl": "en_US",
-                "safe": false,
-                "filter": 0,
-                "device": "desktop",
-                "autocorrect": 0,
-                "page": 1,
-                "pages": 1,
-                "verbatim": false,
-                "raw_html": false
-            })
+        const response = await fetch(`https://api.valueserp.com/search?api_key=57A1364A491A4F10B27A5FF9BA00A54C&q=${req.query.seed.replace(" ", "+")}&gl=${req.query.cc}&include_answer_box=false&flatten_results=false&page=1&num=10&output=json&include_html=false`, {
+            method: 'GET',
         })
         return response.json()
     }
@@ -113,17 +96,17 @@ app.get('/analyse-kw', async (req, res) => {
         let cpc = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.cpc || 0 : 0
         let search_volume = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.search_volume : 0
         getSERP().then(async (dataB) => {
-            console.log(dataB)
             let data = dataB
             let pplAlsoAsk = []  
+            let relatedSearches = []  
             let serpResults = []
             let totalWords = 0
-            let snippet = data.data.featured_snippet ? { title:data.data.featured_snippet.title, url:data.data.featured_snippet.url } : null;
+            let snippet = data.answer_box ? { title:data.answer_box.answers[0].source.title, url:data.answer_box.answers[0].source.link, answer:data.answer_box.answers[0].answer } : null;
             (async function(next) {
-                data.data.organic.forEach( async (elem) => {
+                data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const browser = await puppeteer.launch({headless: false})
+                            const browser = await puppeteer.launch()
                             const page = await browser.newPage()
                             await page.goto(url)
                             let bodyHandle = await page.$('body');
@@ -135,17 +118,21 @@ app.get('/analyse-kw', async (req, res) => {
                             return 1245
                         }
                     }
-                    await getWordCount(elem.url).then((result) => {
-                        serpResults.push({ rank:elem.rank, title:elem.title, url:elem.url, wc:result })
+                    await getWordCount(elem.link).then((result) => {
+                        console.log(elem.about_this_result)
+                        serpResults.push({ rank:elem.position, title:elem.title, url:elem.link, wc:result, secure:elem.about_this_result.connection_secure.raw=="Your connection to this site is <b>secure</b>"?true:false })
                         totalWords += result
-                        if (serpResults.length == data.data.organic.length) {
+                        if (serpResults.length == data.organic_results.length) {
                             next()
                         }
                     })
                 })
             }(async function() {
-                data.data.people_also_ask.forEach((elem) => {
+                data.related_questions.forEach((elem) => {
                     pplAlsoAsk.push(elem.question)
+                })
+                data.related_searches.forEach((elem) => {
+                    relatedSearches.push(elem.query)
                 })
                 let avgW = Math.floor(totalWords/serpResults.length)
                 async function getserpscore() {
@@ -179,7 +166,7 @@ app.get('/analyse-kw', async (req, res) => {
                     "winespectator.com",
                     "dpreview.com",
                     "dpreview.com",
-                    "community.adobe.com",
+                    "adobe.com",
                     "sketchup.com",
                     "unrealengine.com",
                     "blenderartists.org",
@@ -238,7 +225,7 @@ app.get('/analyse-kw', async (req, res) => {
                         frequency_penalty: 0,
                         presence_penalty: 0,
                         stop: ["---"],
-                      }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,post:aiserp.data.choices[0].text } })));       
+                      }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp } })))
                 })
             }))
         })

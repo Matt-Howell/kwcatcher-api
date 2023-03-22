@@ -123,7 +123,7 @@ app.get('/analyse-kw', async (req, res) => {
                 data.data.organic.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const browser = await puppeteer.launch()
+                            const browser = await puppeteer.launch({headless: false})
                             const page = await browser.newPage()
                             await page.goto(url)
                             let bodyHandle = await page.$('body');

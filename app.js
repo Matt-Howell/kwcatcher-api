@@ -225,7 +225,7 @@ app.get('/analyse-kw', async (req, res) => {
                         frequency_penalty: 0,
                         presence_penalty: 0,
                         stop: ["---"],
-                      }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp } })))
+                      }).then((aiserp) => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.data.choices[0].text } })))
                 })
             }))
         })

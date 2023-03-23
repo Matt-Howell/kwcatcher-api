@@ -1,14 +1,14 @@
 const express = require('express');
 const app = express();
 const psl = require('psl');
-const puppeteer = require('puppeteer')
+const puppeteer = require('puppeteer-extra')
 const fetch = require("node-fetch")
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config()
 
 app.get('/get-kws', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
             method: 'POST',
@@ -27,10 +27,11 @@ app.get('/get-kws', async (req, res) => {
 
     let allVals = []
 
-    const alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+    const alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "y", "z"]
     
     let allKeys = []
     for(i=0;i<alphabet.length;i++){
+        allKeys.push(String(alphabet[i]+" ").concat(String(req.query.seed)))
         allKeys.push(String(req.query.seed).concat(" "+alphabet[i]))
     }
 
@@ -67,8 +68,8 @@ app.get('/get-kws', async (req, res) => {
 })
 
 app.get('/analyse-kw', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://beta.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     async function postData(val) {
         const response = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/historical_search_volume/live', {
             method: 'POST',
@@ -106,12 +107,14 @@ app.get('/analyse-kw', async (req, res) => {
                 data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const browser = await puppeteer.launch()
-                            const page = await browser.newPage()
-                            await page.goto(url)
-                            let bodyHandle = await page.$('body');
-                            let totalWordCount = (await page.evaluate(body => body.innerText, bodyHandle)).split(" ").length;
-                            return totalWordCount
+                            const count = puppeteer.launch({ headless: true }).then(async browser => {
+                                const page = await browser.newPage()
+                                await page.goto(url)
+                                let bodyHandle = await page.$('body');
+                                let totalWordCount = (await page.evaluate(body => body.innerText, bodyHandle)).split(" ").length;
+                                return totalWordCount
+                            })
+                            return count
                         }
                         catch(e) {
                             console.log(e)
@@ -119,7 +122,6 @@ app.get('/analyse-kw', async (req, res) => {
                         }
                     }
                     await getWordCount(elem.link).then((result) => {
-                        console.log(elem.about_this_result)
                         serpResults.push({ rank:elem.position, title:elem.title, url:elem.link, wc:result, secure:elem.about_this_result.connection_secure.raw=="Your connection to this site is <b>secure</b>"?true:false })
                         totalWords += result
                         if (serpResults.length == data.organic_results.length) {
@@ -210,22 +212,23 @@ app.get('/analyse-kw', async (req, res) => {
                     return serpScore
                 }
                 await getserpscore().then( async (serpScore) => {
-                      const configuration = new Configuration({
-                        apiKey: process.env.OPENAI_API_KEY,
-                      });
-
-                      const openai = new OpenAIApi(configuration);
-                      
-                      await openai.createCompletion({
-                        model: "text-davinci-003",
-                        prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,
-                        temperature: 0.01,
-                        max_tokens: 412,
-                        top_p: 1,
-                        frequency_penalty: 0,
-                        presence_penalty: 0,
-                        stop: ["---"],
-                      }).then((aiserp) => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.data.choices[0].text } })))
+                      //const configuration = new Configuration({
+                      //  apiKey: process.env.OPENAI_API_KEY,
+                      //});
+//
+                      //const openai = new OpenAIApi(configuration);
+                      //
+                      //await openai.createCompletion({
+                      //  model: "text-davinci-003",
+                      //  prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,
+                      //  temperature: 0.01,
+                      //  max_tokens: 412,
+                      //  top_p: 1,
+                      //  frequency_penalty: 0,
+                      //  presence_penalty: 0,
+                      //  stop: ["---"],
+                      //})
+                      res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:"n/a" } }))
                 })
             }))
         })

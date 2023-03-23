@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const psl = require('psl');
-const puppeteer = require('puppeteer-extra')
+const playwright = require('playwright');
 const fetch = require("node-fetch")
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config()
@@ -107,14 +107,36 @@ app.get('/analyse-kw', async (req, res) => {
                 data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const count = puppeteer.launch({ headless: true }).then(async browser => {
-                                const page = await browser.newPage()
-                                await page.goto(url)
-                                let bodyHandle = await page.$('body');
-                                let totalWordCount = (await page.evaluate(body => body.innerText, bodyHandle)).split(" ").length;
-                                return totalWordCount
-                            })
-                            return count
+                            const browser = await playwright.chromium.launch({
+                                headless: true
+                            });
+                            
+                            const page = await browser.newPage();
+                            await page.goto(url);
+
+                            const words = await page.$eval('body', body => {
+                                const data = [];
+                                count = 0
+                                data.push(...body.getElementsByTagName('h1'));
+                                data.push(...body.getElementsByTagName('h2'));
+                                data.push(...body.getElementsByTagName('h3'));
+                                data.push(...body.getElementsByTagName('h4'));
+                                data.push(...body.getElementsByTagName('h5'));
+                                data.push(...body.getElementsByTagName('p'));
+                                data.push(...body.getElementsByTagName('a'));
+                                data.push(...body.getElementsByTagName('span'));
+                                data.push(...body.getElementsByTagName('div'));
+                                data.push(...body.getElementsByTagName('li'));
+                                data.push(...body.getElementsByTagName('td'));
+                                data.push(...body.getElementsByTagName('pre'));
+                                data.push(...body.getElementsByTagName('code'));
+                                data.forEach(elm => {
+                                    count += elm.innerText.split(' ').length;
+                                });
+                                return count;
+                            });
+
+                            return words
                         }
                         catch(e) {
                             console.log(e)

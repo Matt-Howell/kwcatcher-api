@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const psl = require('psl');
-const playwright = require('playwright');
+const puppeteer = require('puppeteer');
 const fetch = require("node-fetch")
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config()
@@ -107,7 +107,7 @@ app.get('/analyse-kw', async (req, res) => {
                 data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const browser = await playwright.chromium.launch({
+                            const browser = await puppeteer.launch({
                                 headless: true
                             });
                             

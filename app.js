@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const psl = require('psl');
 const cheerio = require('cheerio');
-const axios = require('axios');
+const needle = require('needle');
 const fetch = require("node-fetch")
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config()
@@ -108,8 +108,14 @@ app.get('/analyse-kw', async (req, res) => {
                 data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const response = await axios.get(url);
-                            const $ = cheerio.load(response.data);
+                            const response = await needle('get', url)
+                                .then(function(resp) {
+                                    return resp.body
+                                })
+                                .catch(function(err) {
+                                    console.log(err)
+                                });
+                            const $ = cheerio.load(response);
                             
                             const words = $('html *').contents().map(function() {
                                 return (this.type === 'text') ? $(this).text() : '';

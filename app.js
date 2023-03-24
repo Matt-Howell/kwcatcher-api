@@ -119,7 +119,7 @@ app.get('/analyse-kw', async (req, res) => {
                         }
                         catch(e) {
                             console.log(e)
-                            return 1245
+                            return 404
                         }
                     }
                     await getWordCount(elem.link).then((result) => {
@@ -139,7 +139,7 @@ app.get('/analyse-kw', async (req, res) => {
                 })
                 let avgW = Math.floor(totalWords/serpResults.length)
                 async function getserpscore() {
-                    let serpScore = 1
+                    let serpScore = 5
                     let lowForum = ["reddit.com","quora.com","stackexchange.com","stackoverflow.com","tomshardware.com","askinglot.com","wix.com","blogspot.com","wordpress.com","pinterest.com","facebook.com","twitter.com","linkedin.com","yahoo.com",
                     "wordpress.org",
                     "github.com",
@@ -189,7 +189,7 @@ app.get('/analyse-kw', async (req, res) => {
                     let avgDays = 0
                     for (let i = 0; i < serpResults.length; i++) {
                         if(lowForum.includes(psl.parse(serpResults[i].url).domain)){
-                            serpScore += 1
+                            serpScore -= 1
                         }    
                         const response = await fetch(`https://ipty.de/domage/api.php?domain=${psl.parse(serpResults[i].url).domain}`, {
                             method: 'GET'
@@ -197,23 +197,23 @@ app.get('/analyse-kw', async (req, res) => {
                         avgDays += parseInt(response.text())
                     }
                     if (avgDays/(serpResults.length) < 1500) {
-                        serpScore += 2
+                        serpScore -= 2
                     }
                     if (snippet != null) {
-                        serpScore += 1
+                        serpScore -= 1
                     }
-                    if (avgW < 750){
-                        serpScore += 2
-                    } else if (avgW < 1250) {
-                        serpScore += 1
+                    if (avgW < 1000){
+                        serpScore -= 2
+                    } else if (avgW < 1500) {
+                        serpScore -= 1
                     }
-                    if (serpScore > 5) {
-                        serpScore = 5
+                    if (serpScore < 1) {
+                        serpScore = 1
                     }
                     return serpScore
                 }
                 await getserpscore().then( async (serpScore) => {
-                      const configuration = new Configuration({
+                    const configuration = new Configuration({
                         apiKey: process.env.OPENAI_API_KEY,
                       });
 

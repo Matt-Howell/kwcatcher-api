@@ -107,7 +107,11 @@ app.get('/analyse-kw', async (req, res) => {
                 data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const browser = await puppeteer.launch({
+                            const browser = await puppeteer.launch({ 
+                                args: [
+                                    '--no-sandbox',
+                                    '--disable-setuid-sandbox',
+                                ],
                                 headless: true
                             });
                             

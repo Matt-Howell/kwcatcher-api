@@ -32,7 +32,7 @@ app.get('/get-kws', async (req, res) => {
     
     let allKeys = []
     for(i=0;i<alphabet.length;i++){
-        allKeys.push(String(alphabet[i]+"* ").concat(String(req.query.seed)))
+        allKeys.push(String(alphabet[i]+" ").concat(String(req.query.seed)))
         allKeys.push(String(req.query.seed).concat(" "+alphabet[i]))
     }
 
@@ -43,12 +43,9 @@ app.get('/get-kws', async (req, res) => {
         data.data.forEach((elmew) => { 
             elmew.suggestions.forEach((elme) => { 
                 allVals.push(elme)
+                newKeys.push(elme)
             })
         })
-        for(i=0;i<req.query.seed.replace(" * ", " ").replace("* ", "").replace(" *", "").replace("*", "").split(" ").length;i++){
-            let elmm = req.query.seed.split(" ")[i]
-            newKeys.push("* ".concat(elmm.trim()))
-        }    
         if (newKeys.length < 50) {
             postData(newKeys).then((data) => {
                 data.data.forEach((elme2) => { 

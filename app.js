@@ -32,8 +32,8 @@ app.get('/get-kws', async (req, res) => {
     
     let allKeys = []
     for(i=0;i<alphabet.length;i++){
-        allKeys.push(String(alphabet[i]+" ").concat(String(req.query.seed)))
-        allKeys.push(String(req.query.seed).concat(" "+alphabet[i]))
+        allKeys.push(String(alphabet[i]+"_ ").concat(String(req.query.seed)))
+        allKeys.push(String(req.query.seed).concat(" "+alphabet[i]+"_"))
     }
 
     postData(allKeys).then((dataF) => {
@@ -48,6 +48,7 @@ app.get('/get-kws', async (req, res) => {
         })
         if (newKeys.length < 50) {
             postData(newKeys).then((data) => {
+                console.log(data)
                 data.data.forEach((elme2) => { 
                     elme2.suggestions.forEach((elme) => { 
                         allVals.push(elme)
@@ -99,45 +100,48 @@ app.get('/analyse-kw', async (req, res) => {
         let search_volume = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.search_volume : 0
         getSERP().then(async (dataB) => {
             let data = dataB
+            console.log(data)
             let pplAlsoAsk = []  
             let relatedSearches = []  
             let serpResults = []
             let totalWords = 0
             let snippet = data.answer_box ? { title:data.answer_box.answers[0].source.title, url:data.answer_box.answers[0].source.link, answer:data.answer_box.answers[0].answer } : null;
             (async function(next) {
-                let promises = []
-                data.organic_results.forEach( async (elem) => {
-                    async function getWordCount(url) {
-                        try {
-                            const response = await needle('get', url)
-                                .then(function(resp) {
-                                    return resp.body
-                                })
-                                .catch(function(err) {
-                                    console.log(err)
-                                });
-                            const $ = cheerio.load(response.data);
-                            
-                            const words = $('html *').contents().map(function() {
-                                return (this.type === 'text') ? $(this).text() : '';
-                            }).get().length;
+                async function getWordCount(url) {
+                    try {
+                        const response = await needle('get', url)
+                            .then(function(resp) {
+                                return resp.body
+                            })
+                            .catch(function(err) {
+                                console.log(err)
+                            });
+                        const $ = cheerio.load(response);
+                        
+                        const words = $('body *').contents().map(function() {
+                            return (this.type === 'text') ? $(this).text() : '';
+                        }).get().length;
 
-                            return words
-                        }
-                        catch(e) {
-                            console.log(e)
-                            return 404
-                        }
+                        return words
                     }
+                    catch(e) {
+                        console.log(e)
+                        return 404
+                    }
+                }
+                let promises = []
+                let elems = []
+                data.organic_results.forEach( async (elem) => {
                     promises.push(getWordCount(elem.link))
-                    await Promise.all(promises).then((results) => {
-                        results.forEach((result) => {
-                            serpResults.push({ rank:elem.position, title:elem.title, url:elem.link, wc:result, secure:elem.about_this_result.connection_secure.raw=="Your connection to this site is <b>secure</b>"?true:false })
-                            totalWords += result
-                            if (serpResults.length == data.organic_results.length) {
-                                next()
-                            }
-                        })
+                    elems.push(elem)
+                })
+                Promise.all(promises).then((results) => {
+                    results.forEach((result, ind) => {
+                        serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, wc:result, secure:elems[ind].about_this_result.connection_secure.raw=="Your connection to this site is <b>secure</b>"?true:false })
+                        totalWords += result
+                        if (serpResults.length == data.organic_results.length) {
+                            next()
+                        }
                     })
                 })
             }(async function() {

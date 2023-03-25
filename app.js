@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const psl = require('psl');
 const cheerio = require('cheerio');
-const puppeteer = require('puppeteer');
+const needle = require('needle');
 const fetch = require("node-fetch")
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config()
@@ -105,37 +105,22 @@ app.get('/analyse-kw', async (req, res) => {
             let totalWords = 0
             let snippet = data.answer_box ? { title:data.answer_box.answers[0].source.title, url:data.answer_box.answers[0].source.link, answer:data.answer_box.answers[0].answer } : null;
             (async function(next) {
+                let promises = []
                 data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const browser = await puppeteer.launch({
-                                args: ['--no-sandbox']
-                            });
-
-                            const page = await browser.newPage();
-                            await page.goto(url);
-
-                            const words = await page.$eval('body', body => {
-                                const data = [];
-                                count = 0
-                                data.push(...body.getElementsByTagName('h1'));
-                                data.push(...body.getElementsByTagName('h2'));
-                                data.push(...body.getElementsByTagName('h3'));
-                                data.push(...body.getElementsByTagName('h4'));
-                                data.push(...body.getElementsByTagName('h5'));
-                                data.push(...body.getElementsByTagName('p'));
-                                data.push(...body.getElementsByTagName('a'));
-                                data.push(...body.getElementsByTagName('span'));
-                                data.push(...body.getElementsByTagName('div'));
-                                data.push(...body.getElementsByTagName('li'));
-                                data.push(...body.getElementsByTagName('td'));
-                                data.push(...body.getElementsByTagName('pre'));
-                                data.push(...body.getElementsByTagName('code'));
-                                data.forEach(elm => {
-                                    count += elm.innerText.split(' ').length;
+                            const response = await needle('get', url)
+                                .then(function(resp) {
+                                    return resp.body
+                                })
+                                .catch(function(err) {
+                                    console.log(err)
                                 });
-                                return count;
-                            });
+                            const $ = cheerio.load(response.data);
+                            
+                            const words = $('html *').contents().map(function() {
+                                return (this.type === 'text') ? $(this).text() : '';
+                            }).get().length;
 
                             return words
                         }
@@ -144,12 +129,15 @@ app.get('/analyse-kw', async (req, res) => {
                             return 404
                         }
                     }
-                    await getWordCount(elem.link).then((result) => {
-                        serpResults.push({ rank:elem.position, title:elem.title, url:elem.link, wc:result, secure:elem.about_this_result.connection_secure.raw=="Your connection to this site is <b>secure</b>"?true:false })
-                        totalWords += result
-                        if (serpResults.length == data.organic_results.length) {
-                            next()
-                        }
+                    promises.push(getWordCount(elem.link))
+                    await Promise.all(promises).then((results) => {
+                        results.forEach((result) => {
+                            serpResults.push({ rank:elem.position, title:elem.title, url:elem.link, wc:result, secure:elem.about_this_result.connection_secure.raw=="Your connection to this site is <b>secure</b>"?true:false })
+                            totalWords += result
+                            if (serpResults.length == data.organic_results.length) {
+                                next()
+                            }
+                        })
                     })
                 })
             }(async function() {

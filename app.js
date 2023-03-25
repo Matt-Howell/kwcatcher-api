@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const psl = require('psl');
 const cheerio = require('cheerio');
-const needle = require('needle');
+const puppeteer = require('puppeteer');
 const fetch = require("node-fetch")
 const { Configuration, OpenAIApi } = require("openai");
 require('dotenv').config()
@@ -108,18 +108,34 @@ app.get('/analyse-kw', async (req, res) => {
                 data.organic_results.forEach( async (elem) => {
                     async function getWordCount(url) {
                         try {
-                            const response = await needle('get', url)
-                                .then(function(resp) {
-                                    return resp.body
-                                })
-                                .catch(function(err) {
-                                    console.log(err)
+                            const browser = await puppeteer.launch({
+                                args: ['--no-sandbox']
+                            });
+
+                            const page = await browser.newPage();
+                            await page.goto(url);
+
+                            const words = await page.$eval('body', body => {
+                                const data = [];
+                                count = 0
+                                data.push(...body.getElementsByTagName('h1'));
+                                data.push(...body.getElementsByTagName('h2'));
+                                data.push(...body.getElementsByTagName('h3'));
+                                data.push(...body.getElementsByTagName('h4'));
+                                data.push(...body.getElementsByTagName('h5'));
+                                data.push(...body.getElementsByTagName('p'));
+                                data.push(...body.getElementsByTagName('a'));
+                                data.push(...body.getElementsByTagName('span'));
+                                data.push(...body.getElementsByTagName('div'));
+                                data.push(...body.getElementsByTagName('li'));
+                                data.push(...body.getElementsByTagName('td'));
+                                data.push(...body.getElementsByTagName('pre'));
+                                data.push(...body.getElementsByTagName('code'));
+                                data.forEach(elm => {
+                                    count += elm.innerText.split(' ').length;
                                 });
-                            const $ = cheerio.load(response);
-                            
-                            const words = $('html *').contents().map(function() {
-                                return (this.type === 'text') ? $(this).text() : '';
-                            }).get().length;
+                                return count;
+                            });
 
                             return words
                         }

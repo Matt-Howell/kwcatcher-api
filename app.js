@@ -110,12 +110,12 @@ app.get('/analyse-kw', async (req, res) => {
                 async function getWordCount(url) {
                     try {
                         const response = await needle('get', url)
-                            .then(function(resp) {
-                                return resp.body
-                            })
-                            .catch(function(err) {
-                                console.log(err)
-                            });
+                        .then(function(resp) {
+                            return resp.body
+                        })
+                        .catch(function(err) {
+                            console.log(err)
+                        });
                         const $ = cheerio.load(response);
                         
                         const words = $('body *').contents().map(function() {
@@ -145,12 +145,12 @@ app.get('/analyse-kw', async (req, res) => {
                     })
                 })
             }(async function() {
-                data.related_questions.forEach((elem) => {
+                data.related_questions ? data.related_questions.forEach((elem) => {
                     pplAlsoAsk.push(elem.question)
-                })
-                data.related_searches.forEach((elem) => {
+                }) : null
+                data.related_searches ? data.related_searches.forEach((elem) => {
                     relatedSearches.push(elem.query)
-                })
+                }) : null
                 let avgW = Math.floor(totalWords/serpResults.length)
                 async function getserpscore() {
                     let serpScore = 5
@@ -199,7 +199,9 @@ app.get('/analyse-kw', async (req, res) => {
                     "linuxquestions.org",
                     "raspberrypi.org",
                     "arduino.cc",
-                    "avforums.com"]
+                    "avforums.com",
+                    "pinterest.com",
+                    "twitter.com"]
                     let avgDays = 0
                     for (let i = 0; i < serpResults.length; i++) {
                         if(lowForum.includes(psl.parse(serpResults[i].url).domain)){
@@ -229,20 +231,20 @@ app.get('/analyse-kw', async (req, res) => {
                 await getserpscore().then( async (serpScore) => {
                     const configuration = new Configuration({
                         apiKey: process.env.OPENAI_API_KEY,
-                      });
+                    });
 
-                      const openai = new OpenAIApi(configuration);
-                      
-                      await openai.createCompletion({
-                        model: "text-davinci-003",
-                        prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,
-                        temperature: 0.01,
-                        max_tokens: 412,
-                        top_p: 1,
-                        frequency_penalty: 0,
-                        presence_penalty: 0,
-                        stop: ["---"],
-                      }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.data.choices[0].text } })))
+                    const openai = new OpenAIApi(configuration);
+                    
+                    await openai.createCompletion({
+                      model: "text-davinci-003",
+                      prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,
+                      temperature: 0.01,
+                      max_tokens: 412,
+                      top_p: 1,
+                      frequency_penalty: 0,
+                      presence_penalty: 0,
+                      stop: ["---"],
+                    }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.data.choices[0].text } })))
                 })
             }))
         })

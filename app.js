@@ -32,8 +32,8 @@ app.get('/get-kws', async (req, res) => {
     
     let allKeys = []
     for(i=0;i<alphabet.length;i++){
-        allKeys.push(String(alphabet[i]+"_ ").concat(String(req.query.seed)))
-        allKeys.push(String(req.query.seed).concat(" "+alphabet[i]+"_"))
+        allKeys.push(String(alphabet[i]).concat(String(req.query.seed)))
+        allKeys.push(String(req.query.seed).concat(" "+alphabet[i]))
     }
 
     postData(allKeys).then((dataF) => {
@@ -54,7 +54,20 @@ app.get('/get-kws', async (req, res) => {
                         allVals.push(elme)
                     })
                 })
-                res.send(JSON.stringify({ keywords: [...new Set(allVals)] }))
+                // const toAdd = ["can *", "where *", "why *", "which *", "how *", "who *", "best *", "top *", "cheapest *", "what *", "compare *", "* vs ", "is *"]
+                // let thirdSet = []
+                // toAdd.forEach((el) => {
+                //     thirdSet.push(req.query.seed.replace(" * ", "").replace("* ", "").replace(" *", ""))
+                // })
+                //postData().then((data) => {
+                //    console.log(data)
+                //    data.data.forEach((elme2) => { 
+                //        elme2.suggestions.forEach((elme) => { 
+                //            allVals.push(elme)
+                //        })
+                //    })
+                //})
+                res.send(JSON.stringify({ keywords: [...new Set(allVals)] }))   
             })
         } else {
             postData(newKeys.slice(0, 49)).then((data) => {
@@ -229,22 +242,23 @@ app.get('/analyse-kw', async (req, res) => {
                     return serpScore
                 }
                 await getserpscore().then( async (serpScore) => {
-                    const configuration = new Configuration({
-                        apiKey: process.env.OPENAI_API_KEY,
-                    });
+                   const configuration = new Configuration({
+                       apiKey: process.env.OPENAI_API_KEY,
+                   });
+                   const openai = new OpenAIApi(configuration);
+                   
+                   await openai.createCompletion({
+                     model: "text-davinci-003",
+                     prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,
+                     temperature: 0.01,
+                     max_tokens: 412,
+                     top_p: 1,
+                     frequency_penalty: 0,
+                     presence_penalty: 0,
+                     stop: ["---"],
+                   }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.data.choices[0].text } })))
 
-                    const openai = new OpenAIApi(configuration);
-                    
-                    await openai.createCompletion({
-                      model: "text-davinci-003",
-                      prompt: `Keyword: \"${req.query.seed}\". What would a good post title be? Give an outline for a post about this keyword, with subheadings & titles as a bullet list.`,
-                      temperature: 0.01,
-                      max_tokens: 412,
-                      top_p: 1,
-                      frequency_penalty: 0,
-                      presence_penalty: 0,
-                      stop: ["---"],
-                    }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.data.choices[0].text } })))
+                    //res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:"n/a" } }))
                 })
             }))
         })

@@ -47,7 +47,6 @@ app.get('/get-kws', async (req, res) => {
     }
 
     postData(allKeys).then((dataF) => {
-        console.log(dataF)
         let newKeys = []
         let data = dataF
         data.data.forEach((elmew) => { 
@@ -58,7 +57,6 @@ app.get('/get-kws', async (req, res) => {
         })
         if (newKeys.length < 50) {
             postData(newKeys).then((data) => {
-                console.log(data)
                 data.data.forEach((elme2) => { 
                     elme2.suggestions.forEach((elme) => { 
                         allVals.push(elme)
@@ -117,7 +115,6 @@ app.get('/analyse-kw', async (req, res) => {
         let search_volume = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.search_volume : 0
         getSERP().then(async (dataB) => {
             let data = dataB
-            console.log(data)
             let pplAlsoAsk = []  
             let relatedSearches = []  
             let serpResults = []
@@ -269,7 +266,9 @@ app.get('/analyse-kw', async (req, res) => {
                       frequency_penalty: 0,
                       presence_penalty: 0,
                       stop: ["---"]
-                    }).then(aiserp => res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.choices[0].message.content } })))
+                    }).then(aiserp => {
+                        console.log(aiserp)
+                        res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.choices[0].message.content } }))})
 
                    // res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:"n/a" } }))
                 })

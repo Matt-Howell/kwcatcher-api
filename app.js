@@ -9,7 +9,6 @@ require('dotenv').config()
 
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;
@@ -79,7 +78,6 @@ app.get('/get-kws', async (req, res) => {
 
 app.get('/analyse-kw', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;

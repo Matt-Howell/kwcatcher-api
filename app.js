@@ -127,6 +127,7 @@ app.get('/analyse-kw', async (req, res) => {
             let snippet = data.answer_box && data.answer_box.answers[0].source ? { title:data.answer_box.answers[0].source.title, url:data.answer_box.answers[0].source.link, answer:data.answer_box.answers[0].answer } : null;
             (async function(next) {
                 async function getWordCount(url) {
+                    try {
                         let timeA = new Date().getTime()
                         let timeDiff = 0
                         const response = await needle('get', url)
@@ -138,13 +139,23 @@ app.get('/analyse-kw', async (req, res) => {
                             console.log(err)
                         });
 
+                        try {
                             const $ = cheerio.load(response);
                         
                             const words = $('body *').contents().map(function() {
-                                return (this.type === 'text') ? $(this).text() : '';
+                                return (this.tagName === 'h1' || 'h2' || 'h3' || 'h4' || 'h5' || 'h6' || 'p' || 'td' || 'li' || 'code' || 'a') ? $(this).text() : '';
                             }).get().length;
 
                             return [words, timeDiff]
+                        } catch (error) {
+                            console.log(error)
+                            return [404, timeDiff]
+                        }
+                    }
+                    catch(e) {
+                        console.log(e)
+                        return [404, 0]
+                    }
                     }
                 let promises = []
                 let elems = []

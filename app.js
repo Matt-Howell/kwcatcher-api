@@ -126,26 +126,29 @@ app.get('/analyse-kw', async (req, res) => {
             let snippet = data.answer_box && data.answer_box.answers[0].source ? { title:data.answer_box.answers[0].source.title, url:data.answer_box.answers[0].source.link, answer:data.answer_box.answers[0].answer } : null;
             (async function(next) {
                 async function getWordCount(url) {
-                    try {
-                        const browser = await puppeteer.launch({args: ["--no-sandbox", "--disabled-setupid-sandbox"]})
-                        const page = await browser.newPage()
-                        
                         let timeA = new Date().getTime()
                         let timeDiff = 0
+                        const response = await needle('get', url)
+                        .then(function(resp) {
+                            timeDiff = Math.floor(new Date().getTime() - timeA) / 1000
+                            return resp.body
+                        })
+                        .catch(function(err) {
+                            console.log(err)
+                        });
 
-                        await page.goto(url)
+                            const $ = cheerio.load(response);
                         
-                        timeDiff = Math.floor(new Date().getTime() - timeA) / 1000
-                        let bodyHandle = await page.$('body');
-                        let totalWordCount = (await page.evaluate(body => body.innerText, bodyHandle)).split(" ").length;
+                            const words = $('body *').contents().map(function() {
+                                return (this.type === 'text') ? $(this).text() : '';
+                            }).get().length;
 
-                        return [totalWordCount || 404, timeDiff || 1.00]
+                            return [words, timeDiff]
+                        } catch (error) {
+                            console.log(error)
+                            return [404, timeDiff]
+                        }
                     }
-                    catch(e) {
-                        console.log(e)
-                        return [404, 0]
-                    }
-                }
                 let promises = []
                 let elems = []
                 data.organic_results.forEach( async (elem) => {

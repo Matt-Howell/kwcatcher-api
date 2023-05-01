@@ -145,10 +145,6 @@ app.get('/analyse-kw', async (req, res) => {
                             }).get().length;
 
                             return [words, timeDiff]
-                        } catch (error) {
-                            console.log(error)
-                            return [404, timeDiff]
-                        }
                     }
                 let promises = []
                 let elems = []

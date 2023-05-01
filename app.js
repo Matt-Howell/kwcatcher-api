@@ -1,7 +1,8 @@
 import express from 'express';
 const app = express();
 import psl from 'psl';
-import puppeteer from 'puppeteer';
+import needle from 'needle';
+import cheerio from 'cheerio';
 import fetch from 'node-fetch';
 import { Configuration, OpenAIApi } from "openai";
 import dotenv from 'dotenv'

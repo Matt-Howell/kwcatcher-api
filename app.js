@@ -127,7 +127,7 @@ app.get('/analyse-kw', async (req, res) => {
             (async function(next) {
                 async function getWordCount(url) {
                     try {
-                        const browser = await puppeteer.launch({headless: true})
+                        const browser = await puppeteer.launch({headless:false, args: ["--no-sandbox"]})
                         const page = await browser.newPage()
                         
                         let timeA = new Date().getTime()

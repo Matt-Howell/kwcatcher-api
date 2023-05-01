@@ -1,14 +1,15 @@
-const express = require('express');
+import express from 'express';
 const app = express();
-const psl = require('psl');
-const cheerio = require('cheerio');
-const needle = require('needle');
-const fetch = require("node-fetch")
-const { Configuration, OpenAIApi } = require("openai");
-require('dotenv').config()
+import psl from 'psl';
+import puppeteer from 'puppeteer';
+import fetch from 'node-fetch';
+import { Configuration, OpenAIApi } from "openai";
+import dotenv from 'dotenv'
+dotenv.config()
 
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;
@@ -36,6 +37,7 @@ app.get('/get-kws', async (req, res) => {
     const alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "y", "z"]
     
     let allKeys = []
+    var i;
     for(i=0;i<alphabet.length;i++){
         allKeys.push(String(req.query.seed).concat(" "+alphabet[i]))
         if(req.query.seed.includes("*")){
@@ -46,6 +48,7 @@ app.get('/get-kws', async (req, res) => {
     }
 
     postData(allKeys).then((dataF) => {
+        console.log(dataF)
         let newKeys = []
         let data = dataF
         data.data.forEach((elmew) => { 
@@ -56,6 +59,7 @@ app.get('/get-kws', async (req, res) => {
         })
         if (newKeys.length < 50) {
             postData(newKeys).then((data) => {
+                console.log(data)
                 data.data.forEach((elme2) => { 
                     elme2.suggestions.forEach((elme) => { 
                         allVals.push(elme)
@@ -78,6 +82,7 @@ app.get('/get-kws', async (req, res) => {
 
 app.get('/analyse-kw', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;
@@ -113,6 +118,7 @@ app.get('/analyse-kw', async (req, res) => {
         let search_volume = data.tasks[0].result[0].items != null ? data.tasks[0].result[0].items[0].keyword_info.search_volume : 0
         getSERP().then(async (dataB) => {
             let data = dataB
+            console.log(data)
             let pplAlsoAsk = []  
             let relatedSearches = []  
             let serpResults = []
@@ -121,29 +127,19 @@ app.get('/analyse-kw', async (req, res) => {
             (async function(next) {
                 async function getWordCount(url) {
                     try {
+                        const browser = await puppeteer.launch({headless: "new"})
+                        const page = await browser.newPage()
+                        
                         let timeA = new Date().getTime()
                         let timeDiff = 0
-                        const response = await needle('get', url)
-                        .then(function(resp) {
-                            timeDiff = Math.floor(new Date().getTime() - timeA) / 1000
-                            return resp.body
-                        })
-                        .catch(function(err) {
-                            console.log(err)
-                        });
 
-                        try {
-                            const $ = cheerio.load(response);
+                        await page.goto(url)
                         
-                            const words = $('body *').contents().map(function() {
-                                return (this.tagName === 'h1' || 'h2' || 'h3' || 'h4' || 'h5' || 'h6' || 'p' || 'td' || 'li' || 'code' || 'a') ? $(this).text() : '';
-                            }).get().length;
+                        timeDiff = Math.floor(new Date().getTime() - timeA) / 1000
+                        let bodyHandle = await page.$('body');
+                        let totalWordCount = (await page.evaluate(body => body.innerText, bodyHandle)).split(" ").length;
 
-                            return [words, timeDiff]
-                        } catch (error) {
-                            console.log(error)
-                            return [404, timeDiff]
-                        }
+                        return [totalWordCount || 404, timeDiff || 1.00]
                     }
                     catch(e) {
                         console.log(e)
@@ -158,6 +154,7 @@ app.get('/analyse-kw', async (req, res) => {
                 })
                 Promise.all(promises).then((results) => {
                     results.forEach((result, ind) => {
+                        console.log(result)
                         serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, wc:result[0], timeFetch:result[1] })
                         totalWords += result[0]
                         if (serpResults.length == data.organic_results.length) {
@@ -250,28 +247,32 @@ app.get('/analyse-kw', async (req, res) => {
                     return serpScore
                 }
                 await getserpscore().then( async (serpScore) => {
-                    const configuration = new Configuration({
-                        apiKey: process.env.OPENAI_API_KEY,
-                    });
-                    const openai = new OpenAIApi(configuration);
-                    
-                    await openai.createChatCompletion({
-                      model: "gpt-3.5-turbo",
-                      messages: [{role: "user", content: `Create a blog post outline for the keyword: "${req.query.seed}".  Give the post title and a short outline with subheadings & titles as just a bullet point list using "●" and "◦".`}],
-                      temperature: 0.01,
-                      max_tokens: 412,
-                      top_p: 1,
-                      frequency_penalty: 0,
-                      presence_penalty: 0,
-                      stop: ["---"]
-                    }).then(aiserp => {
-                        res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:aiserp.data.choices[0].message.content } }))})
-
-                   // res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches,post:"n/a" } }))
+                   res.send(JSON.stringify({ cpc:cpc,vol:[search_volume, historical_volume],serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches, post:null } }))
                 })
             }))
         })
     });
+})
+
+app.get('/get-outline', async (req, res) => { 
+    res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
+    
+    await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [{role: "user", content: `Create a blog post outline for the keyword: "${req.query.kw}".  Give the post title and a short outline with subheadings & titles as just a bullet point list using "-" and "◦".`}],
+      temperature: 0.01,
+      max_tokens: 412,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      stop: ["---"]
+    }).then(aiserp => res.send(JSON.stringify({ post:aiserp.data.choices[0].message.content } )))
 })
 
 app.listen(8080, () => console.log('Running on port 8080'));

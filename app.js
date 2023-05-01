@@ -52,12 +52,14 @@ app.get('/get-kws', async (req, res) => {
         console.log(dataF)
         let newKeys = []
         let data = dataF
-        data.data.forEach((elmew) => { 
-            elmew.suggestions.forEach((elme) => { 
-                allVals.push(elme)
-                newKeys.push(elme)
+        if(data.data){
+            data.data.forEach((elmew) => { 
+                elmew.suggestions.forEach((elme) => { 
+                    allVals.push(elme)
+                    newKeys.push(elme)
+                })
             })
-        })
+        }
         if (newKeys.length < 50) {
             postData(newKeys).then((data) => {
                 console.log(data)

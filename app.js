@@ -194,7 +194,7 @@ app.get('/analyse-kw', async (req, res) => {
                     "twitter.com"]
                     let avgDays = 0
                     for (let i = 0; i < serpResults.length; i++) {
-                        if(lowForum.includes(serpResults[i].domain.replace("www.", ""))){
+                        if(lowForum.includes(psl.parse(serpResults[i].url).domain)){
                             serpScore -= 1
                         }    
                         const response = await fetch(`https://ipty.de/domage/api.php?domain=${psl.parse(serpResults[i].url).domain}`, {

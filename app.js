@@ -52,25 +52,20 @@ app.get('/get-kws', async (req, res) => {
         console.log(dataF)
         let newKeys = []
         let data = dataF
-        if(data.data){
-            data.data.forEach((elmew) => { 
-                elmew.suggestions.forEach((elme) => { 
-                    allVals.push(elme)
-                    newKeys.push(elme)
-                })
+        data.data.forEach((elmew) => { 
+            elmew.suggestions.forEach((elme) => { 
+                allVals.push(elme)
+                newKeys.push(elme)
             })
-        }
+        })
         if (newKeys.length < 50) {
             postData(newKeys).then((data) => {
                 console.log(data)
-                
-        if(data.data){
                 data.data.forEach((elme2) => { 
                     elme2.suggestions.forEach((elme) => { 
                         allVals.push(elme)
                     })
                 })
-        }
                 res.send(JSON.stringify({ keywords: [...new Set(allVals)] }))   
             })
         } else {
@@ -145,16 +140,20 @@ app.get('/analyse-kw', async (req, res) => {
                         });
 
                         try {
-                            const $ = cheerio.load(response);
+                            if(typeof response === 'string'){
+                                const $ = cheerio.load(response);
                         
-                            const words = $('body *').contents().map(function() {
-                                return (this.tagName === 'h1' || 'h2' || 'h3' || 'h4' || 'h5' || 'h6' || 'p' || 'td' || 'li' || 'code' || 'a') ? $(this).text() : '';
-                            }).get().length;
-
-                            return [words, timeDiff]
+                                const words = $('body *').contents().map(function() {
+                                    return (this.tagName === 'h1' || 'h2' || 'h3' || 'h4' || 'h5' || 'h6' || 'p' || 'td' || 'li' || 'code' || 'a') ? $(this).text() : '';
+                                }).get().length;
+    
+                                return [words, timeDiff]
+                            } else {
+                                return [404, 0]
+                            }
                         } catch (error) {
                             console.log(error)
-                            return [404, timeDiff]
+                            return [404, 0]
                         }
                     }
                     catch(e) {
@@ -191,54 +190,11 @@ app.get('/analyse-kw', async (req, res) => {
                     let lowForum = ["reddit.com","quora.com","stackexchange.com","stackoverflow.com","tomshardware.com","askinglot.com","wix.com","blogspot.com","wordpress.com","pinterest.com","facebook.com","twitter.com","linkedin.com","yahoo.com",
                     "wordpress.org",
                     "github.com",
-                    "tripadvisor.com",
-                    "goodreads.com",
-                    "steamcommunity.com",
-                    "gamefaqs.com",
-                    "xda-developers.com",
-                    "myfitnesspal.com",
-                    "webmd.com",
-                    "babycenter.com",
-                    "city-data.com",
-                    "cruisecritic.com",
-                    "houzz.com",
-                    "theknot.com",
-                    "weddingwire.com",
-                    "ehealthforum.com",
-                    "bodybuilding.com",
-                    "tomshardware.com",
-                    "avsforum.com",
-                    "dslreports.com",
-                    "fodors.com",
-                    "bogleheads.org",
-                    "chowhound.com",
-                    "whirlpool.net.au",
-                    "beeradvocate.com",
-                    "winespectator.com",
-                    "dpreview.com",
-                    "dpreview.com",
-                    "adobe.com",
-                    "sketchup.com",
-                    "unrealengine.com",
-                    "blenderartists.org",
-                    "autodesk.com",
-                    "probrewer.com",
-                    "homebrewtalk.com",
-                    "androidcentral.com",
-                    "crackberry.com",
-                    "macrumors.com",
-                    "imore.com",
-                    "windowscentral.com",
-                    "windowsforum.com",
-                    "linuxquestions.org",
-                    "raspberrypi.org",
-                    "arduino.cc",
-                    "avforums.com",
                     "pinterest.com",
                     "twitter.com"]
                     let avgDays = 0
                     for (let i = 0; i < serpResults.length; i++) {
-                        if(lowForum.includes(psl.parse(serpResults[i].url).domain)){
+                        if(lowForum.includes(serpResults[i].domain.replace("www.", ""))){
                             serpScore -= 1
                         }    
                         const response = await fetch(`https://ipty.de/domage/api.php?domain=${psl.parse(serpResults[i].url).domain}`, {
@@ -259,6 +215,9 @@ app.get('/analyse-kw', async (req, res) => {
                     }
                     if (serpScore < 1) {
                         serpScore = 1
+                    }
+                    if (serpScore > 3) {
+                        serpScore -= 1
                     }
                     return serpScore
                 }

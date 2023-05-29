@@ -192,18 +192,10 @@ app.get('/analyse-kw', async (req, res) => {
                     "github.com",
                     "pinterest.com",
                     "twitter.com"]
-                    let avgDays = 0
                     for (let i = 0; i < serpResults.length; i++) {
                         if(lowForum.includes(psl.parse(serpResults[i].url).domain)){
                             serpScore -= 1
-                        }    
-                        const response = await fetch(`https://ipty.de/domage/api.php?domain=${psl.parse(serpResults[i].url).domain}`, {
-                            method: 'GET'
-                        })
-                        avgDays += parseInt(response.text())
-                    }
-                    if (avgDays/(serpResults.length) < 365) {
-                        serpScore -= 2
+                        }  
                     }
                     if (snippet != null) {
                         serpScore -= 1
@@ -217,7 +209,7 @@ app.get('/analyse-kw', async (req, res) => {
                         serpScore = 1
                     }
                     if (serpScore > 3) {
-                        serpScore -= 1
+                        serpScore -= 3
                     }
                     return serpScore
                 }

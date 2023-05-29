@@ -209,7 +209,7 @@ app.get('/analyse-kw', async (req, res) => {
                         serpScore = 1
                     }
                     if (serpScore > 3) {
-                        serpScore -= 3
+                        serpScore -= 2
                     }
                     return serpScore
                 }

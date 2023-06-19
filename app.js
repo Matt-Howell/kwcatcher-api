@@ -27,7 +27,8 @@ app.get('/get-kws', async (req, res) => {
             },
             body: JSON.stringify({
                 "hl": "en_US",
-                "keywords": val   
+                "keywords": val,
+                'gl': req.query.geo
             })
         })
         return response.json()
@@ -106,7 +107,7 @@ app.get('/analyse-kw', async (req, res) => {
     }
 
     async function getSERP(val) {
-        const response = await fetch(`https://api.valueserp.com/search?api_key=57A1364A491A4F10B27A5FF9BA00A54C&q=${req.query.seed.replace(" ", "+")}&include_answer_box=false&gl=US&flatten_results=false&page=1&num=10&output=json&include_html=false`, {
+        const response = await fetch(`https://api.valueserp.com/search?api_key=57A1364A491A4F10B27A5FF9BA00A54C&q=${req.query.seed.replace(" ", "+")}&include_answer_box=false&gl=${req.query.geo}&flatten_results=false&page=1&num=10&output=json&include_html=false`, {
             method: 'GET',
         })
         return response.json()

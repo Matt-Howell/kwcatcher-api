@@ -260,6 +260,34 @@ app.get('/analyse-kw', async (req, res) => {
     })
 })
 
+app.get('/find-paa', async (req, res) => { 
+    res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+
+    console.log(req.query.keyword)
+    
+    customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
+        keywords:[req.query.keyword],
+        customer_id:"9053142011"
+    }).then(finals => {
+        
+        console.log(finals)
+        let sendValues = []
+        let tempVals = [req.query.keyword]
+        let dataFromGA = finals.results
+
+        tempVals.forEach((value, index, array) => { 
+            let temHistory = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.monthly_search_volumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthly_searches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
+            let monthlyS = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.avg_monthly_searches : 0 : 0 : 0
+            sendValues.push({keyword: value, volume: monthlyS, trend: temHistory })
+        })
+
+        console.log(sendValues)
+
+        res.send(JSON.stringify({ keywords: [...new Set(sendValues)] })) 
+    }).catch(e => console.log(e));
+})
+
 app.get('/get-outline', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')

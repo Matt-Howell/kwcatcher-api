@@ -81,7 +81,8 @@ app.get('/get-kws', async (req, res) => {
                 })
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
-                    customer_id:"9053142011"
+                    customer_id:"9053142011",
+                    geo_target_constants:[req.query.geo]
                 }).then(finals => {
                     let sendValues = []
                     let tempVals = [...new Set(allVals)]
@@ -105,7 +106,8 @@ app.get('/get-kws', async (req, res) => {
                 })
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
-                    customer_id:"9053142011"
+                    customer_id:"9053142011",
+                    geo_target_constants:[req.query.geo]
                 }).then(finals => {
                     let sendValues = []
                     let tempVals = [...new Set(allVals)]

@@ -21,7 +21,7 @@ const customerVal = client.Customer({
 });
 
 app.get('/get-kws', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
@@ -125,7 +125,7 @@ app.get('/get-kws', async (req, res) => {
 })
 
 app.get('/analyse-kw', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
@@ -261,7 +261,7 @@ app.get('/analyse-kw', async (req, res) => {
 })
 
 app.get('/find-paa', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
 
     console.log(req.query.keyword)
@@ -289,7 +289,7 @@ app.get('/find-paa', async (req, res) => {
 })
 
 app.get('/get-outline', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
 
     const configuration = new Configuration({

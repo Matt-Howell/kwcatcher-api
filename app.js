@@ -17,7 +17,7 @@ const client = new GoogleAdsApi({
 
 const customerVal = client.Customer({
     customer_id:"9053142011",
-    refresh_token:"1//04dgoea_H_21ECgYIARAAGAQSNwF-L9IrcQRrqVMdnVMoNjhTCDb2pI2ax1ljzSB0MntSWpltMnwXta0JPpWAiAwCbdlmzPitIiQ",
+    refresh_token:"1//04A0M5xjT_i-_CgYIARAAGAQSNwF-L9IrfeODhBVmGZFlYlM_M1L-SgT20oqwjsMFuHzZa5a6eUDbjDkWWZIAf9V4-urOSQmBfDw",
 });
 
 app.get('/get-kws', async (req, res) => { 
@@ -61,6 +61,117 @@ app.get('/get-kws', async (req, res) => {
         }
     }
 
+    const geos = [
+        [
+            "AU",
+            "2036"
+        ],
+        [
+            "BR",
+            "2076"
+        ],
+        [
+            "CA",
+            "2124"
+        ],
+        [
+            "CN",
+            "2156"
+        ],
+        [
+            "EG",
+            "2818"
+        ],
+        [
+            "FR",
+            "2250"
+        ],
+        [
+            "DE",
+            "2276"
+        ],
+        [
+            "IN",
+            "2356"
+        ],
+        [
+            "IE",
+            "2372"
+        ],
+        [
+            "IL",
+            "2376"
+        ],
+        [
+            "JP",
+            "2392"
+        ],
+        [
+            "KR",
+            "2410"
+        ],
+        [
+            "PK",
+            "2586"
+        ],
+        [
+            "PT",
+            "2620"
+        ],
+        [
+            "RO",
+            "2642"
+        ],
+        [
+            "RU",
+            "2643"
+        ],
+        [
+            "SA",
+            "2682"
+        ],
+        [
+            "SG",
+            "2702"
+        ],
+        [
+            "ZA",
+            "2710"
+        ],
+        [
+            "ES",
+            "2724"
+        ],
+        [
+            "SE",
+            "2752"
+        ],
+        [
+            "CH",
+            "2756"
+        ],
+        [
+            "TR",
+            "2792"
+        ],
+        [
+            "UA",
+            "2804"
+        ],
+        [
+            "AE",
+            "2784"
+        ],
+        [
+            "GB",
+            "2826"
+        ],
+        [
+            "VE",
+            "2862"
+        ]
+    ]
+
     postData(allKeys).then( async (dataF) => {
         console.log(dataF)
         let newKeys = []
@@ -79,9 +190,14 @@ app.get('/get-kws', async (req, res) => {
                         allVals.push(elme)
                     })
                 })
+                let targetGeo = geos.filter(val => val[0] == req.query.geo) || "2840"
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
-                    customer_id:"9053142011"
+                    customer_id:"9053142011",
+                    historical_metrics_options: {
+                        include_average_cpc: true
+                    },
+                    geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`]
                 }).then(finals => {
                     let sendValues = []
                     let tempVals = [...new Set(allVals)]
@@ -90,11 +206,12 @@ app.get('/get-kws', async (req, res) => {
                     tempVals.forEach((value, index, array) => { 
                         let temHistory = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.monthly_search_volumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthly_searches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
                         let monthlyS = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.avg_monthly_searches : 0 : 0 : 0
-                        sendValues.push({keyword: value, volume: monthlyS, trend: temHistory })
+                        let cpc = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? parseInt(dataFromGA[index].keyword_metrics.average_cpc_micros) > 0 ? parseFloat(parseInt(dataFromGA[index].keyword_metrics.average_cpc_micros)/1000000).toFixed(2) : 0 : 0 : 0 : 0
+                        sendValues.push({keyword: value, volume: monthlyS, trend: temHistory, cpc:cpc })
                     })
 
                     res.send(JSON.stringify({ keywords: [...new Set(sendValues)] })) 
-                })
+                }).catch(e => console.log(e))
             })
         } else {
             postData(newKeys.slice(0, 49)).then((data) => {
@@ -103,9 +220,14 @@ app.get('/get-kws', async (req, res) => {
                         allVals.push(elme)
                     })
                 })
+                let targetGeo = geos.filter(val => val[0] == req.query.geo) || "2840"
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
-                    customer_id:"9053142011"
+                    customer_id:"9053142011",
+                    geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
+                    historical_metrics_options: {
+                        include_average_cpc: true
+                    }
                 }).then(finals => {
                     let sendValues = []
                     let tempVals = [...new Set(allVals)]
@@ -114,11 +236,12 @@ app.get('/get-kws', async (req, res) => {
                     tempVals.forEach((value, index, array) => { 
                         let temHistory = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.monthly_search_volumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthly_searches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
                         let monthlyS = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.avg_monthly_searches : 0 : 0 : 0
-                        sendValues.push({keyword: value, volume: monthlyS, trend: temHistory })
+                        let cpc = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? parseInt(dataFromGA[index].keyword_metrics.average_cpc_micros) > 0 ? parseFloat(parseInt(dataFromGA[index].keyword_metrics.average_cpc_micros)/1000000).toFixed(2) : 0 : 0 : 0 : 0
+                        sendValues.push({keyword: value, volume: monthlyS, trend: temHistory, cpc:cpc })
                     })
 
                     res.send(JSON.stringify({ keywords: [...new Set(sendValues)] })) 
-                })
+                }).catch(e => console.log(e))
             })
         }
     }).catch(e => console.log(e));
@@ -177,7 +300,15 @@ app.get('/analyse-kw', async (req, res) => {
                              return (this.tagName === 'h1' || 'h2' || 'h3' || 'h4' || 'h5' || 'h6' || 'p' || 'td' || 'li' || 'code' || 'a') ? $(this).text() : '';
                          }).get().length;
 
-                         return [words, timeDiff]
+                        let totalOccs = 0
+
+                        $('body *').contents().map(function() {
+                            this.tagName === 'h1' || 'h2' || 'h3' || 'h4' || 'h5' || 'h6' || 'p' || 'td' || 'li' || 'code' || 'a' ? $(this).text().includes(req.query.seed) ? totalOccs += 1 : totalOccs += 0 : totalOccs += 0;
+                        }).get()
+
+                        const desc = $('meta[name="description"]').attr('content') || ""
+
+                        return [words, timeDiff, desc, totalOccs]
                      } else {
                          return [404, 0]
                      }
@@ -201,7 +332,7 @@ app.get('/analyse-kw', async (req, res) => {
              console.log(results)
              results.forEach((result, ind) => {
                  console.log(result)
-                 serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, wc:result[0], timeFetch:result[1] })
+                 serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, wc:result[0], timeFetch:result[1], desc:result[2].substring(0, 180), occs:result[3] })
                  totalWords += result[0]
                  if (serpResults.length == data.organic_results.length) {
                      next()
@@ -264,11 +395,126 @@ app.get('/find-paa', async (req, res) => {
     res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
 
-    console.log(req.query.keyword)
+    const geos = [
+        [
+            "AU",
+            "2036"
+        ],
+        [
+            "BR",
+            "2076"
+        ],
+        [
+            "CA",
+            "2124"
+        ],
+        [
+            "CN",
+            "2156"
+        ],
+        [
+            "EG",
+            "2818"
+        ],
+        [
+            "FR",
+            "2250"
+        ],
+        [
+            "DE",
+            "2276"
+        ],
+        [
+            "IN",
+            "2356"
+        ],
+        [
+            "IE",
+            "2372"
+        ],
+        [
+            "IL",
+            "2376"
+        ],
+        [
+            "JP",
+            "2392"
+        ],
+        [
+            "KR",
+            "2410"
+        ],
+        [
+            "PK",
+            "2586"
+        ],
+        [
+            "PT",
+            "2620"
+        ],
+        [
+            "RO",
+            "2642"
+        ],
+        [
+            "RU",
+            "2643"
+        ],
+        [
+            "SA",
+            "2682"
+        ],
+        [
+            "SG",
+            "2702"
+        ],
+        [
+            "ZA",
+            "2710"
+        ],
+        [
+            "ES",
+            "2724"
+        ],
+        [
+            "SE",
+            "2752"
+        ],
+        [
+            "CH",
+            "2756"
+        ],
+        [
+            "TR",
+            "2792"
+        ],
+        [
+            "UA",
+            "2804"
+        ],
+        [
+            "AE",
+            "2784"
+        ],
+        [
+            "GB",
+            "2826"
+        ],
+        [
+            "VE",
+            "2862"
+        ]
+    ]
+
+    let targetGeo = geos.filter(val => val[0] == req.query.geo) || "2840"
     
     customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
         keywords:[req.query.keyword],
-        customer_id:"9053142011"
+        customer_id:"9053142011",
+        geo_target_constants: [`geoTargetConstants/${targetGeo}`],
+        historical_metrics_options: {
+            include_average_cpc: true
+        }
     }).then(finals => {
         
         console.log(finals)
@@ -279,7 +525,8 @@ app.get('/find-paa', async (req, res) => {
         tempVals.forEach((value, index, array) => { 
             let temHistory = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.monthly_search_volumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthly_searches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
             let monthlyS = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? dataFromGA[index].keyword_metrics.avg_monthly_searches : 0 : 0 : 0
-            sendValues.push({keyword: value, volume: monthlyS, trend: temHistory })
+            let cpc = dataFromGA[index] !== undefined ? dataFromGA[index] !== null ? dataFromGA[index].keyword_metrics !== null ? parseInt(dataFromGA[index].keyword_metrics.average_cpc_micros) > 0 ? parseFloat(parseInt(dataFromGA[index].keyword_metrics.average_cpc_micros)/1000000).toFixed(2) : 0 : 0 : 0 : 0
+            sendValues.push({keyword: value, volume: monthlyS, trend: temHistory, cpc:cpc })
         })
 
         console.log(sendValues)

@@ -169,6 +169,10 @@ app.get('/get-kws', async (req, res) => {
         [
             "VE",
             "2862"
+        ],
+        [
+            "US",
+            "2840"
         ]
     ]
 
@@ -190,7 +194,8 @@ app.get('/get-kws', async (req, res) => {
                         allVals.push(elme)
                     })
                 })
-                let targetGeo = geos.filter(val => val[0] == req.query.geo) || "2840"
+                let targetGeo = geos.filter(val => val[0] == req.query.geo)
+        
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
                     customer_id:"9053142011",
@@ -220,7 +225,8 @@ app.get('/get-kws', async (req, res) => {
                         allVals.push(elme)
                     })
                 })
-                let targetGeo = geos.filter(val => val[0] == req.query.geo) || "2840"
+                let targetGeo = geos.filter(val => val[0] == req.query.geo)
+        
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
                     customer_id:"9053142011",
@@ -332,7 +338,7 @@ app.get('/analyse-kw', async (req, res) => {
              console.log(results)
              results.forEach((result, ind) => {
                  console.log(result)
-                 serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, wc:result[0], timeFetch:result[1], desc:result[2].substring(0, 180), occs:result[3] })
+                 serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3] })
                  totalWords += result[0]
                  if (serpResults.length == data.organic_results.length) {
                      next()
@@ -503,15 +509,18 @@ app.get('/find-paa', async (req, res) => {
         [
             "VE",
             "2862"
+        ],
+        [
+            "US",
+            "2840"
         ]
     ]
 
-    let targetGeo = geos.filter(val => val[0] == req.query.geo) || "2840"
-    
+    let targetGeo = geos.filter(val => val[0] == req.query.geo)
     customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
         keywords:[req.query.keyword],
         customer_id:"9053142011",
-        geo_target_constants: [`geoTargetConstants/${targetGeo}`],
+        geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
         historical_metrics_options: {
             include_average_cpc: true
         }

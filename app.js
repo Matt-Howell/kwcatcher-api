@@ -230,7 +230,7 @@ app.get('/get-kws', async (req, res) => {
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
                     customer_id:"9053142011",
-                    geo_target_constants:[`${targetGeo[0][1]}`],
+                    geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
                     historical_metrics_options: {
                         include_average_cpc: true
                     }
@@ -520,7 +520,7 @@ app.get('/find-paa', async (req, res) => {
     customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
         keywords:[req.query.keyword],
         customer_id:"9053142011",
-        geo_target_constants:[`${targetGeo[0][1]}`],
+        geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
         historical_metrics_options: {
             include_average_cpc: true
         }

@@ -17,7 +17,7 @@ const client = new GoogleAdsApi({
 
 const customerVal = client.Customer({
     customer_id:"9053142011",
-    refresh_token:"1//04A0M5xjT_i-_CgYIARAAGAQSNwF-L9IrfeODhBVmGZFlYlM_M1L-SgT20oqwjsMFuHzZa5a6eUDbjDkWWZIAf9V4-urOSQmBfDw",
+    refresh_token:"1//04J_BuSWxaNF8CgYIARAAGAQSNwF-L9IrNTiyABrHVZAOJaf8RghmBMp0Fm8HUI2laxS6l9TNDXG6kAYb65j1YBy53frpKdtEpyg",
 });
 
 app.get('/get-kws', async (req, res) => { 
@@ -31,6 +31,7 @@ app.get('/get-kws', async (req, res) => {
         return [];
     }
     async function postData(val) {
+        console.log(`${req.query.lang}_${req.query.geo}`)
         const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
             method: 'POST',
             headers: {
@@ -38,11 +39,11 @@ app.get('/get-kws', async (req, res) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                "hl": "en_US",
+                "hl": `${req.query.lang}_${req.query.geo}`,
                 "keywords": val,
                 'gl': req.query.geo  
             })
-        })
+        }).catch(e => console.log(e))
         return response.json()
     }
 
@@ -64,11 +65,13 @@ app.get('/get-kws', async (req, res) => {
     const geos = [
         [
             "AU",
-            "2036"
+            "2036",
+            "1000"
         ],
         [
             "BR",
-            "2076"
+            "2076",
+            "1014"
         ],
         [
             "CA",
@@ -176,6 +179,8 @@ app.get('/get-kws', async (req, res) => {
         ]
     ]
 
+    let langConstants = ["ar,1019", "bn,1056", "bg,1020", "ca,1038", "zh,1017", "zh,1018", "hr,1039", "cs,1021", "da,1009", "nl,1010", "en,1000", "et,1043", "tl,1042", "fi,1011", "fr,1002", "de,1001", "el,1022", "gu,1072", "iw,1027", "hi,1023", "hu,1024", "is,1026", "id,1025", "it,1004", "ja,1005", "kn,1086", "ko,1012", "lv,1028", "lt,1029", "ms,1102", "ml,1098", "mr,1101", "no,1013", "fa,1064", "pl,1030", "pt,1014", "pa,1110", "ro,1032", "ru,1031", "sr,1035", "sk,1033", "sl,1034", "es,1003", "sv,1015", "ta,1130", "te,1131", "th,1044", "tr,1037", "uk,1036", "ur,1041", "vi,1040"]
+
     postData(allKeys).then( async (dataF) => {
         console.log(dataF)
         let newKeys = []
@@ -195,6 +200,7 @@ app.get('/get-kws', async (req, res) => {
                     })
                 })
                 let targetGeo = geos.filter(val => val[0] == req.query.geo)
+                let targetLang = langConstants.filter(el => el.split(",")[0] == req.query.langCode.toLowerCase())
         
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
@@ -202,7 +208,8 @@ app.get('/get-kws', async (req, res) => {
                     historical_metrics_options: {
                         include_average_cpc: true
                     },
-                    geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`]
+                    geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
+                    language:[`languageConstants/${targetLang[0].split(",")[1]}`]
                 }).then(finals => {
                     let sendValues = []
                     let tempVals = [...new Set(allVals)]
@@ -265,12 +272,11 @@ app.get('/analyse-kw', async (req, res) => {
     }
 
     async function getSERP(val) {
-        const response = await fetch(`https://api.valueserp.com/search?api_key=57A1364A491A4F10B27A5FF9BA00A54C&q=${req.query.seed.replace(" ", "+")}&include_answer_box=false&gl=${req.query.geo.toLowerCase()}&flatten_results=false&page=1&num=10&output=json&include_html=false`, {
+        const response = await fetch(`https://api.valueserp.com/search?api_key=57A1364A491A4F10B27A5FF9BA00A54C&q=${req.query.seed.replace(" ", "+")}&include_answer_box=false&gl=${req.query.geo.toLowerCase()}&flatten_results=false&page=1&num=10&output=json&include_html=false&hl=${req.query.lang}`, {
             method: 'GET',
         })
         return response.json()
     }
-
 
     getSERP().then(async (dataB) => {
      let data = dataB
@@ -516,14 +522,19 @@ app.get('/find-paa', async (req, res) => {
         ]
     ]
 
+    let langConstants = ["ar,1019", "bn,1056", "bg,1020", "ca,1038", "zh,1017", "zh,1018", "hr,1039", "cs,1021", "da,1009", "nl,1010", "en,1000", "et,1043", "tl,1042", "fi,1011", "fr,1002", "de,1001", "el,1022", "gu,1072", "iw,1027", "hi,1023", "hu,1024", "is,1026", "id,1025", "it,1004", "ja,1005", "kn,1086", "ko,1012", "lv,1028", "lt,1029", "ms,1102", "ml,1098", "mr,1101", "no,1013", "fa,1064", "pl,1030", "pt,1014", "pa,1110", "ro,1032", "ru,1031", "sr,1035", "sk,1033", "sl,1034", "es,1003", "sv,1015", "ta,1130", "te,1131", "th,1044", "tr,1037", "uk,1036", "ur,1041", "vi,1040"]
+
     let targetGeo = geos.filter(val => val[0] == req.query.geo)
+    let targetLang = langConstants.filter(el => el.split(",")[0] == req.query.langCode.toLowerCase())
+
     customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
-        keywords:[req.query.keyword],
+        keywords:[...new Set(allVals)],
         customer_id:"9053142011",
-        geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
         historical_metrics_options: {
             include_average_cpc: true
-        }
+        },
+        geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
+        language:[`languageConstants/${targetLang[0].split(",")[1]}`]
     }).then(finals => {
         
         console.log(finals)

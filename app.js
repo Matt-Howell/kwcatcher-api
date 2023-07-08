@@ -21,8 +21,8 @@ const customerVal = client.Customer({
 });
 
 app.get('/get-kws', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;
@@ -208,6 +208,7 @@ app.get('/get-kws', async (req, res) => {
                     historical_metrics_options: {
                         include_average_cpc: true
                     },
+                    keyword_plan_network:"GOOGLE_SEARCH",
                     geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
                     language:[`languageConstants/${targetLang[0].split(",")[1]}`]
                 }).then(finals => {
@@ -237,6 +238,7 @@ app.get('/get-kws', async (req, res) => {
                 customerVal.keywordPlanIdeas.generateKeywordHistoricalMetrics({
                     keywords:[...new Set(allVals)],
                     customer_id:"9053142011",
+                    keyword_plan_network:"GOOGLE_SEARCH",
                     geo_target_constants:[`geoTargetConstants/${targetGeo[0][1]}`],
                     historical_metrics_options: {
                         include_average_cpc: true
@@ -261,8 +263,8 @@ app.get('/get-kws', async (req, res) => {
 })
 
 app.get('/analyse-kw', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;

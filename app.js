@@ -17,7 +17,7 @@ const client = new GoogleAdsApi({
 
 const customerVal = client.Customer({
     customer_id:"9053142011",
-    refresh_token:"1//04J_BuSWxaNF8CgYIARAAGAQSNwF-L9IrNTiyABrHVZAOJaf8RghmBMp0Fm8HUI2laxS6l9TNDXG6kAYb65j1YBy53frpKdtEpyg",
+    refresh_token:"1//04YXmvR2rLmiACgYIARAAGAQSNwF-L9IremqTFgZT59lAbo7lEH6nIGcpAL6PulE8Hpt-dktvbRZLTrS36CESq4V1YuZx5hCdFpE",
 });
 
 app.get('/get-kws', async (req, res) => { 

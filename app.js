@@ -20,6 +20,17 @@ const customerVal = client.Customer({
     refresh_token:"1//04YXmvR2rLmiACgYIARAAGAQSNwF-L9IremqTFgZT59lAbo7lEH6nIGcpAL6PulE8Hpt-dktvbRZLTrS36CESq4V1YuZx5hCdFpE",
 });
 
+// const client = new GoogleAdsApi({
+//     client_id: "639034362315-olj8pt00chv64ba489a75qut9uagblsd.apps.googleusercontent.com",
+//     client_secret: "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",
+//     developer_token: "pywkS_9ozjYFIaK5pqic9w",
+// });
+// 
+// const customerVal = client.Customer({
+//     customer_id:"4983521940",
+//     refresh_token:"1//04vuLsgbeCpzzCgYIARAAGAQSNwF-L9IrPVrXbrZnr3WN_GklTNhjkadKaTmBRN5584CIOlBbz17JrAwgqAk8YWR_i4AlhQO79UU",
+// });
+
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
     // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
@@ -339,18 +350,24 @@ app.get('/analyse-kw', async (req, res) => {
          let promises = []
          let elems = []
          data.organic_results.forEach( async (elem) => {
-             promises.push(getWordCount(elem.link))
-             elems.push(elem)
+            promises.push(getWordCount(elem.link))
+            elems.push(elem)
          })
          Promise.all(promises).then((results) => {
              console.log(results)
              results.forEach((result, ind) => {
-                 console.log(result)
-                 serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3] })
-                 totalWords += result[0]
-                 if (serpResults.length == data.organic_results.length) {
-                     next()
-                 }
+                fetch(`http://domdetailer.com/api/checkDomain.php?domain=${psl.parse(elems[ind].domain).domain}&apikey=7XV4PI1LV3EJS&majesticChoice=root&app=keywordcatcher`, {method:"GET"} ).then( async (stats) => {
+                    let backlinkStats = await stats.json()
+                    let links = backlinkStats.mozLinks
+                    let da = backlinkStats.mozDA
+                    console.log(da, links)
+                    console.log({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3] })
+                    serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3] })
+                    totalWords += result[0]
+                    if (serpResults.length == data.organic_results.length) {
+                        next()
+                    }
+                })
              })
          })
          .catch((e) => console.log(e))
@@ -370,6 +387,7 @@ app.get('/analyse-kw', async (req, res) => {
              "pinterest.com",
              "twitter.com"]
              let avgDays = 0
+             let avgDa = 0
              for (let i = 0; i < serpResults.length; i++) {
                  if(lowForum.includes(psl.parse(serpResults[i].url).domain)){
                      serpScore -= 1
@@ -377,7 +395,17 @@ app.get('/analyse-kw', async (req, res) => {
                  const response = await fetch(`https://ipty.de/domage/api.php?domain=${psl.parse(serpResults[i].url).domain}`, {
                      method: 'GET'
                  })
+                 avgDa += parseInt(serpResults[i].da)
                  avgDays += parseInt(response.text())
+             }
+             if (avgDa/(serpResults.length) < 5) {
+                 serpScore -= 3
+             }
+             if (avgDa/(serpResults.length) < 10) {
+                 serpScore -= 2
+             }
+             if (avgDa/(serpResults.length) < 20) {
+                 serpScore -= 1
              }
              if (avgDays/(serpResults.length) < 365) {
                  serpScore -= 2
@@ -390,15 +418,15 @@ app.get('/analyse-kw', async (req, res) => {
              } else if (avgW < 1500) {
                  serpScore -= 1
              }
-             if (serpScore < 1) {
+             if (serpScore < 1){
                  serpScore = 1
-             }
-             if (serpScore > 3) {
-                 serpScore -= 1
+             } else if (serpScore > 5) {
+                 serpScore = 5
              }
              return serpScore
          }
          await getserpscore().then( async (serpScore) => {
+            serpResults = serpResults.sort((a, b) => a.rank - b.rank)
             res.send(JSON.stringify({ serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches, post:null } }))
          })
      }))
@@ -406,8 +434,8 @@ app.get('/analyse-kw', async (req, res) => {
 })
 
 app.get('/find-paa', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+   res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
+   // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
 
     const geos = [
         [

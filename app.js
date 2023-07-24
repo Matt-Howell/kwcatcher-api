@@ -17,7 +17,7 @@ const client = new GoogleAdsApi({
 
 const customerVal = client.Customer({
     customer_id:"9053142011",
-    refresh_token:"1//04YXmvR2rLmiACgYIARAAGAQSNwF-L9IremqTFgZT59lAbo7lEH6nIGcpAL6PulE8Hpt-dktvbRZLTrS36CESq4V1YuZx5hCdFpE",
+    refresh_token:"1//04i9DzyE16LOHCgYIARAAGAQSNwF-L9IrvDYle0qaulXnrAz_4BCXr7t_OPZLB9B3F9OKUT5wmfSKO5rC8W22cT-Zhwb7Hdw0O4A",
 });
 
 // const client = new GoogleAdsApi({
@@ -333,7 +333,13 @@ app.get('/analyse-kw', async (req, res) => {
 
                         const desc = $('meta[name="description"]').attr('content') || ""
 
-                        return [words, timeDiff, desc, totalOccs]
+                        const schema = $("script[type='application/ld+json']");
+                        let allSchemas = []
+                        schema.map((i, el) => {
+                            allSchemas.push(JSON.parse(el.children[0].data))
+                        })
+
+                        return [words, timeDiff, desc, totalOccs, allSchemas]
                      } else {
                          return [404, 0]
                      }
@@ -362,7 +368,7 @@ app.get('/analyse-kw', async (req, res) => {
                     let da = backlinkStats.mozDA
                     console.log(da, links)
                     console.log({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3] })
-                    serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3] })
+                    serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3], schema:result[4] })
                     totalWords += result[0]
                     if (serpResults.length == data.organic_results.length) {
                         next()

@@ -22,7 +22,7 @@ import { google } from 'googleapis'
 
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3001')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;
@@ -32,7 +32,7 @@ app.get('/get-kws', async (req, res) => {
     }
     async function postData(val) {
         console.log(`${req.query.lang}_${req.query.geo}`)
-        const response = await fetch('https://api.serpsbot.com/v2/google/search-suggestions', {
+        const response = await fetch('https://api.serpsbot.com/v3/google/search-suggestions', {
             method: 'POST',
             headers: {
                 'X-API-KEY': 'C7RmWpEFYbzsLrpdxfedWo2Jt5fbe3LE',
@@ -60,6 +60,104 @@ app.get('/get-kws', async (req, res) => {
         } else {
             allKeys.push(alphabet[i]+" ".concat(String(req.query.seed)))
         }
+    }
+
+    postData(allKeys).then( async (dataF) => {
+        console.log(dataF)
+        let newKeys = []
+        let data = dataF
+        data.data.forEach((elmew) => { 
+            elmew.suggestions.forEach((elme) => { 
+                allVals.push(elme)
+                newKeys.push(elme)
+            })
+        })
+        if (newKeys.length < 50) {
+            postData(newKeys).then((data) => {
+                console.log(data)
+                data.data.forEach((elme2) => { 
+                    elme2.suggestions.forEach((elme) => { 
+                        allVals.push(elme)
+                    })
+                })
+                res.send(JSON.stringify({ keywords: [...new Set(allVals)] })) 
+            }).catch((e) => console.log(e))
+        } else {
+            postData(newKeys.slice(0, 49)).then( async (data) => {
+                data.data.forEach((elme2) => { 
+                    elme2.suggestions.forEach((elme) => { 
+                        allVals.push(elme)
+                    })
+                })
+                res.send(JSON.stringify({ keywords: [...new Set(allVals)] })) 
+
+                //let targetGeo = geos.filter(val => val[0] == req.query.geo)
+                //let targetLang = langConstants.filter(el => el.split(",")[0] == req.query.lang.toLowerCase())
+        //
+                //const oauth2Client = new google.auth.OAuth2(
+                //    "670654031425-uu5hloc33m63oe2jspnq2nnribdsc1ot.apps.googleusercontent.com",
+                //    "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",
+                //    "https://app.keywordcatcher.com/"
+                //  );
+                //  
+                //  oauth2Client.setCredentials({
+                //    refresh_token: "1//04w1Cm3azccLKCgYIARAAGAQSNwF-L9IrbDxQZCzrOhw_g5BaiRJTnSWmSfr4dccGp2QsM-t5ko6gh5zOXuqW4Ldr5pfuvepPP2A" 
+                //  });
+//
+                //  oauth2Client.getAccessToken((err, token) => {
+                //    if (err) {
+                //      console.log(err);
+                //      return;
+                //    }
+                //    fetch('https://googleads.googleapis.com/v14/customers/9053142011:generateKeywordHistoricalMetrics', {
+                //        method: 'POST',
+                //        headers: {
+                //            'developer-token': 'tyOzrJ3BDYUbndWp8bZBkQ',
+                //            'Authorization': `Bearer ${token}`,
+                //            'Accept': 'application/json',
+                //            'Content-Type': 'application/json'
+                //        },
+                //        body: JSON.stringify({
+                //            'keywords': [...new Set(allVals)],
+                //            'language': `languageConstants/${targetLang[0].split(",")[1]}`,
+                //            'geoTargetConstants': [`geoTargetConstants/${targetGeo[0][1]}`],
+                //            "keywordPlanNetwork": "GOOGLE_SEARCH",
+                //            "historicalMetricsOptions":{"includeAverageCpc":true}
+                //        })
+                //    }).then((res) => res.json()).then((finals) => {
+                //        let sendValues = []
+                //        let dataFromGA = finals.results
+//
+                //        dataFromGA.forEach((value, index, array) => { 
+                //            let temHistory = value !== undefined ? value !== null ? value.keywordMetrics !== null ? value.keywordMetrics.monthlySearchVolumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthlySearches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
+                //            let monthlyS = value !== undefined ? value !== null ? value.keywordMetrics !== null ? value.keywordMetrics.avgMonthlySearches : 0 : 0 : 0
+                //            let cpc = value !== undefined ? value !== null ? value.keywordMetrics !== null ? parseInt(value.keywordMetrics.averageCpcMicros) > 0 ? parseFloat(parseInt(value.keywordMetrics.averageCpcMicros)/1000000).toFixed(2) : 0 : 0 : 0 : 0
+                //            sendValues.push({keyword: value.text, volume: monthlyS, trend: temHistory, cpc:cpc })
+                //        })
+//
+                //    });
+                //  })
+            }).catch((e) => console.log(e))
+        }
+    }).catch(e => console.log(e));
+})
+
+app.get('/analyse-kw', async (req, res) => { 
+    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3001')
+    if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
+        res.sendStatus(200)
+        return;
+    }
+    if (req.query.seed.length == 0) {
+        return [];
+    }
+
+    async function getSERP(val) {
+        const response = await fetch(`https://api.valueserp.com/search?api_key=57A1364A491A4F10B27A5FF9BA00A54C&q=${req.query.seed.replace(" ", "+")}&include_answer_box=false&gl=${req.query.geo.toLowerCase()}&flatten_results=false&page=1&num=10&output=json&include_html=false&hl=${req.query.lang}`, {
+            method: 'GET',
+        })
+        return response.json()
     }
 
     const geos = [
@@ -178,149 +276,6 @@ app.get('/get-kws', async (req, res) => {
     ]
 
     let langConstants = ["ar,1019", "bn,1056", "bg,1020", "ca,1038", "zh,1017", "zh,1018", "hr,1039", "cs,1021", "da,1009", "nl,1010", "en,1000", "et,1043", "tl,1042", "fi,1011", "fr,1002", "de,1001", "el,1022", "gu,1072", "he,1027", "hi,1023", "hu,1024", "is,1026", "id,1025", "it,1004", "ja,1005", "kn,1086", "ko,1012", "lv,1028", "lt,1029", "ms,1102", "ml,1098", "mr,1101", "no,1013", "fa,1064", "pl,1030", "pt,1014", "pa,1110", "ro,1032", "ru,1031", "sr,1035", "sk,1033", "sl,1034", "es,1003", "sv,1015", "ta,1130", "te,1131", "th,1044", "tr,1037", "uk,1036", "ur,1041", "vi,1040"]
-
-    postData(allKeys).then( async (dataF) => {
-        console.log(dataF)
-        let newKeys = []
-        let data = dataF
-        data.data.forEach((elmew) => { 
-            elmew.suggestions.forEach((elme) => { 
-                allVals.push(elme)
-                newKeys.push(elme)
-            })
-        })
-        if (newKeys.length < 50) {
-            postData(newKeys).then((data) => {
-                console.log(data)
-                data.data.forEach((elme2) => { 
-                    elme2.suggestions.forEach((elme) => { 
-                        allVals.push(elme)
-                    })
-                })
-                let targetGeo = geos.filter(val => val[0] == req.query.geo)
-                let targetLang = langConstants.filter(el => el.split(",")[0] == req.query.lang.toLowerCase())
-        
-                const oauth2Client = new google.auth.OAuth2(
-                    "670654031425-uu5hloc33m63oe2jspnq2nnribdsc1ot.apps.googleusercontent.com",
-                    "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",
-                    "https://app.keywordcatcher.com/"
-                  );
-                  
-                  oauth2Client.setCredentials({
-                    refresh_token: "1//04w1Cm3azccLKCgYIARAAGAQSNwF-L9IrbDxQZCzrOhw_g5BaiRJTnSWmSfr4dccGp2QsM-t5ko6gh5zOXuqW4Ldr5pfuvepPP2A" 
-                  });
-
-                  oauth2Client.getAccessToken((err, token) => {
-                    if (err) {
-                      console.log(err);
-                      return;
-                    }
-                    fetch('https://googleads.googleapis.com/v14/customers/9053142011:generateKeywordHistoricalMetrics', {
-                        method: 'POST',
-                        headers: {
-                            'developer-token': 'tyOzrJ3BDYUbndWp8bZBkQ',
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            'keywords': [...new Set(allVals)],
-                            'language': `languageConstants/${targetLang[0].split(",")[1]}`,
-                            'geoTargetConstants': [`geoTargetConstants/${targetGeo[0][1]}`],
-                            "keywordPlanNetwork": "GOOGLE_SEARCH",
-                            "historicalMetricsOptions":{"includeAverageCpc":true}
-                        })
-                    }).then((res) => res.json()).then((finals) => {
-                        let sendValues = []
-                        let dataFromGA = finals.results
-
-                        dataFromGA.forEach((value, index, array) => { 
-                            let temHistory = value !== undefined ? value !== null ? value.keywordMetrics !== null ? value.keywordMetrics.monthlySearchVolumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthlySearches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
-                            let monthlyS = value !== undefined ? value !== null ? value.keywordMetrics !== null ? value.keywordMetrics.avgMonthlySearches : 0 : 0 : 0
-                            let cpc = value !== undefined ? value !== null ? value.keywordMetrics !== null ? parseInt(value.keywordMetrics.averageCpcMicros) > 0 ? parseFloat(parseInt(value.keywordMetrics.averageCpcMicros)/1000000).toFixed(2) : 0 : 0 : 0 : 0
-                            sendValues.push({keyword: value.text, volume: monthlyS, trend: temHistory, cpc:cpc })
-                        })
-
-                        res.send(JSON.stringify({ keywords: [...new Set(sendValues)] })) 
-                    });
-                  })
-            }).catch((e) => console.log(e))
-        } else {
-            postData(newKeys.slice(0, 49)).then( async (data) => {
-                data.data.forEach((elme2) => { 
-                    elme2.suggestions.forEach((elme) => { 
-                        allVals.push(elme)
-                    })
-                })
-                let targetGeo = geos.filter(val => val[0] == req.query.geo)
-                let targetLang = langConstants.filter(el => el.split(",")[0] == req.query.lang.toLowerCase())
-
-                const oauth2Client = new google.auth.OAuth2(
-                    "670654031425-uu5hloc33m63oe2jspnq2nnribdsc1ot.apps.googleusercontent.com",
-                    "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",
-                    "https://app.keywordcatcher.com/"
-                  );
-                  
-                  oauth2Client.setCredentials({
-                    refresh_token: "1//04w1Cm3azccLKCgYIARAAGAQSNwF-L9IrbDxQZCzrOhw_g5BaiRJTnSWmSfr4dccGp2QsM-t5ko6gh5zOXuqW4Ldr5pfuvepPP2A" 
-                  });
-
-                  oauth2Client.getAccessToken((err, token) => {
-                    if (err) {
-                      console.log(err);
-                      return;
-                    }
-                    fetch('https://googleads.googleapis.com/v14/customers/9053142011:generateKeywordHistoricalMetrics', {
-                        method: 'POST',
-                        headers: {
-                            'developer-token': 'tyOzrJ3BDYUbndWp8bZBkQ',
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            'keywords': [...new Set(allVals)],
-                            'language': `languageConstants/${targetLang[0].split(",")[1]}`,
-                            'geoTargetConstants': [`geoTargetConstants/${targetGeo[0][1]}`],
-                            "keywordPlanNetwork": "GOOGLE_SEARCH",
-                            "historicalMetricsOptions":{"includeAverageCpc":true}
-                        })
-                    }).then((res) => res.json()).then((finals) => {
-                        let sendValues = []
-                        let dataFromGA = finals.results
-
-                        dataFromGA.forEach((value, index, array) => { 
-                            let temHistory = value !== undefined ? value !== null ? value.keywordMetrics !== null ? value.keywordMetrics !== undefined ? value.keywordMetrics.monthlySearchVolumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthlySearches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
-                            let monthlyS = value !== undefined ? value !== null ? value.keywordMetrics !== undefined ? value.keywordMetrics.avgMonthlySearches : 0 : 0 : 0
-                            let cpc = value !== undefined ? value !== null ? value.keywordMetrics !== undefined ? parseInt(value.keywordMetrics.averageCpcMicros) > 0 ? parseFloat(parseInt(value.keywordMetrics.averageCpcMicros)/1000000).toFixed(2) : 0 : 0 : 0 : 0
-                            sendValues.push({keyword: value.text, volume: monthlyS, trend: temHistory, cpc:cpc })
-                        })
-
-                        res.send(JSON.stringify({ keywords: [...new Set(sendValues)] })) 
-                    });
-                  })
-            }).catch((e) => console.log(e))
-        }
-    }).catch(e => console.log(e));
-})
-
-app.get('/analyse-kw', async (req, res) => { 
-    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
-    if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
-        res.sendStatus(200)
-        return;
-    }
-    if (req.query.seed.length == 0) {
-        return [];
-    }
-
-    async function getSERP(val) {
-        const response = await fetch(`https://api.valueserp.com/search?api_key=57A1364A491A4F10B27A5FF9BA00A54C&q=${req.query.seed.replace(" ", "+")}&include_answer_box=false&gl=${req.query.geo.toLowerCase()}&flatten_results=false&page=1&num=10&output=json&include_html=false&hl=${req.query.lang}`, {
-            method: 'GET',
-        })
-        return response.json()
-    }
 
     getSERP().then(async (dataB) => {
      let data = dataB
@@ -464,15 +419,66 @@ app.get('/analyse-kw', async (req, res) => {
          }
          await getserpscore().then( async (serpScore) => {
             serpResults = serpResults.sort((a, b) => a.rank - b.rank)
-            res.send(JSON.stringify({ serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches, post:null } }))
-         })
-     }))
+            let targetGeo = geos.filter(val => val[0] == req.query.geo)
+            let targetLang = langConstants.filter(el => el.split(",")[0] == req.query.lang.toLowerCase()) 
+            const oauth2Client = new google.auth.OAuth2(
+                "670654031425-uu5hloc33m63oe2jspnq2nnribdsc1ot.apps.googleusercontent.com",
+                "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",
+                "https://app.keywordcatcher.com/"
+              );
+              
+              oauth2Client.setCredentials({
+                refresh_token: "1//04w1Cm3azccLKCgYIARAAGAQSNwF-L9IrbDxQZCzrOhw_g5BaiRJTnSWmSfr4dccGp2QsM-t5ko6gh5zOXuqW4Ldr5pfuvepPP2A" 
+              });
+       
+              oauth2Client.getAccessToken((err, token) => {
+               if (err) {
+                   console.log(err);
+                   return;
+               }
+              fetch('https://googleads.googleapis.com/v14/customers/9053142011:generateKeywordHistoricalMetrics', {
+                  method: 'POST',
+                  headers: {
+                      'developer-token': 'tyOzrJ3BDYUbndWp8bZBkQ',
+                      'Authorization': `Bearer ${token}`,
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                      'keywords': [req.query.seed],
+                      'language': `languageConstants/${targetLang[0].split(",")[1]}`,
+                      'geoTargetConstants': [`geoTargetConstants/${targetGeo[0][1]}`],
+                      "keywordPlanNetwork": "GOOGLE_SEARCH",
+                      "historicalMetricsOptions":{"includeAverageCpc":true}
+                  })
+              }).then((res) => res.json()).then((finals) => {
+                  let sendValues = []
+                  let dataFromGA = finals.results
+       
+                  dataFromGA.forEach((value, index, array) => { 
+                    console.log(value)
+                      let temHistory = value !== undefined ? value !== null ? value.keywordMetrics !== null || undefined ? value.keywordMetrics.monthlySearchVolumes.slice(0, 12).map(val => ({month: val.month.substring(0, 1)+val.month.substring(1, val.month.length).toLowerCase()+" "+val.year, searches: parseInt(val.monthlySearches)})) || [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}] : [{month: "June 2023", searches: 0}, {month: "May 2023", searches: 0}, {month: "April 2023", searches: 0}]
+                      let monthlyS = value !== undefined ? value !== null ? value.keywordMetrics !== null ? value.keywordMetrics.avgMonthlySearches : 0 : 0 : 0
+                      let cpc = value !== undefined ? value !== null ? value.keywordMetrics !== null ? parseInt(value.keywordMetrics.averageCpcMicros) > 0 ? parseFloat(parseInt(value.keywordMetrics.averageCpcMicros)/1000000).toFixed(2) : 0 : 0 : 0 : 0
+                      let volTotal = 0
+                      temHistory.forEach((element) => {
+                        volTotal += element.searches
+                      })
+                      let volIncrease = volTotal/temHistory.length
+                      sendValues.push({keyword: value.text, volume: monthlyS, trend: temHistory, cpc:cpc, volAvg:volIncrease })
+                  })
+                  
+                  res.send(JSON.stringify({ serp:{ results:serpResults,queries:pplAlsoAsk,snippet:snippet,avgWc:avgW,score:serpScore,rel:relatedSearches, post:null }, vols:sendValues[0] }))
+              }).catch((e) => console.log(e));
+             })
+         }).catch((e) => console.log(e));
+     })).catch((e) => console.log(e));
     })
 })
 
 app.get('/find-paa', async (req, res) => { 
    res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-   // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+   // res.set('Access-Control-Allow-Origin', 'http://localhost:3001')
 
     const geos = [
         [
@@ -642,7 +648,7 @@ app.get('/find-paa', async (req, res) => {
 
 app.get('/get-outline', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3001')
 
     const configuration = new Configuration({
         apiKey: process.env.OPENAI_API_KEY,

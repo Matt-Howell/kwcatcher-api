@@ -428,7 +428,7 @@ app.get('/analyse-kw', async (req, res) => {
               );
               
               oauth2Client.setCredentials({
-                refresh_token: "1//04w1Cm3azccLKCgYIARAAGAQSNwF-L9IrbDxQZCzrOhw_g5BaiRJTnSWmSfr4dccGp2QsM-t5ko6gh5zOXuqW4Ldr5pfuvepPP2A" 
+                refresh_token: "1//04yv__31akLiwCgYIARAAGAQSNwF-L9IruRvmeqj5MDP9acz6MoYeyreXi2b4sVJSDXx_9IzCUTR8yhu3JKOus-wJnZ70_D3li1g" 
               });
        
               oauth2Client.getAccessToken((err, token) => {
@@ -607,7 +607,7 @@ app.get('/find-paa', async (req, res) => {
     );
     
     oauth2Client.setCredentials({
-      refresh_token: "1//04w1Cm3azccLKCgYIARAAGAQSNwF-L9IrbDxQZCzrOhw_g5BaiRJTnSWmSfr4dccGp2QsM-t5ko6gh5zOXuqW4Ldr5pfuvepPP2A" 
+      refresh_token: "1//04yv__31akLiwCgYIARAAGAQSNwF-L9IruRvmeqj5MDP9acz6MoYeyreXi2b4sVJSDXx_9IzCUTR8yhu3JKOus-wJnZ70_D3li1g" 
     });
 
     oauth2Client.getAccessToken((err, token) => {

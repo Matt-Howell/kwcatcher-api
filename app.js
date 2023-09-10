@@ -428,7 +428,7 @@ app.get('/analyse-kw', async (req, res) => {
               );
               
               oauth2Client.setCredentials({
-                refresh_token: "1//04yv__31akLiwCgYIARAAGAQSNwF-L9IruRvmeqj5MDP9acz6MoYeyreXi2b4sVJSDXx_9IzCUTR8yhu3JKOus-wJnZ70_D3li1g" 
+                refresh_token: "1//04SRM3cqzsUvFCgYIARAAGAQSNwF-L9IrljJXjLizIiNA3bjzwnHdhOV6RTkT7Lv83oLaUAK39B73BNY3HP3BmD6-7KkCtUfKfwY" 
               });
        
               oauth2Client.getAccessToken((err, token) => {

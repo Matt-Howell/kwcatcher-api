@@ -8,6 +8,7 @@ import { Configuration, OpenAIApi } from "openai";
 import dotenv from 'dotenv'
 dotenv.config()
 import { google } from 'googleapis'
+import * as prs from "url" 
 
 app.get('/get-kws', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
@@ -87,7 +88,7 @@ app.get('/get-kws', async (req, res) => {
 
 app.get('/analyse-kw', async (req, res) => { 
     res.set('Access-Control-Allow-Origin', 'https://app.keywordcatcher.com')
-    // res.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    // res.set('Access-Control-Allow-Origin', 'http://localhost:3002')
     if (req.query.seed=="Yv7m2bqnGJsfn4MI5JJf") {
         res.sendStatus(200)
         return;
@@ -229,7 +230,7 @@ app.get('/analyse-kw', async (req, res) => {
      let totalWords = 0
      let snippet = data.answer_box && data.answer_box.answers[0].source ? { title:data.answer_box.answers[0].source.title, url:data.answer_box.answers[0].source.link, answer:data.answer_box.answers[0].answer } : null;
      (async function(next) {
-         async function getWordCount(url) {
+         async function getWordCount(url, domain) {
              try {
                  let timeA = new Date().getTime()
                  let timeDiff = 0
@@ -268,24 +269,46 @@ app.get('/analyse-kw', async (req, res) => {
                             allSchemas.push(JSON.parse(el.children[0].data))
                         })
 
-                        return [words, timeDiff, desc, totalOccs, allSchemas]
+                        const hrefs = $('[hreflang]');
+                        let allHrefs = []
+                        hrefs.map((i, el) => {
+                            allHrefs.push($(el).attr('hreflang'))
+                        })
+
+                        const images = $('body').find('img');
+                        let numberOfImages = images.length
+
+                        const links = $('body').find('a[href]');
+                        let totallinks = links.length
+                        let extlinks = []
+                        links.map((i, el) => {
+                            if ($(el).attr('href')) {       
+                                let parsedUrl = prs.parse($(el).attr('href'));
+                                if (parsedUrl.hostname && parsedUrl.hostname.includes(psl.parse(domain).domain)) {
+                                    extlinks.push($(el).attr('href'))
+                                }
+                            }
+                        })
+                        let totalExtLinks = extlinks.length
+
+                        return [words, timeDiff, desc, totalOccs, allSchemas, allHrefs, numberOfImages, totallinks, totalExtLinks]
                      } else {
-                         return [404, 0]
+                         return [404, 0, "", 0, [], [], 0, 0, 0]
                      }
                  } catch (error) {
                      console.log(error)
-                     return [404, 0]
+                     return [404, 0, "", 0, [], [], 0, 0, 0]
                  }
              }
              catch(e) {
                  console.log(e)
-                 return [404, 0]
+                 return [404, 0, "", 0, [], [], 0, 0, 0]
              }
          }
          let promises = []
          let elems = []
          data.organic_results.forEach( async (elem) => {
-            promises.push(getWordCount(elem.link))
+            promises.push(getWordCount(elem.link, elem.domain))
             elems.push(elem)
          })
          Promise.all(promises).then((results) => {
@@ -297,7 +320,7 @@ app.get('/analyse-kw', async (req, res) => {
                     let da = backlinkStats.mozDA
                     console.log(da, links)
                     console.log({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3] })
-                    serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3], schema:result[4] })
+                    serpResults.push({ rank:elems[ind].position, title:elems[ind].title, url:elems[ind].link, da: da, links:links, wc:result[0], timeFetch:result[1], desc:result[2], occs:result[3], schema:result[4], hrefLang: result[5], images: result[6], totalLinks: result[7], extLinks: result[8] })
                     totalWords += result[0]
                     if (serpResults.length == data.organic_results.length) {
                         next()
